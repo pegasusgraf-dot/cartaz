@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#241442">
+  <meta name="description" content="Acesse o Gerador de Cartazes para criar e baixar seus materiais promocionais.">
+  <title>Entrar — Gerador de Cartazes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: light; --purple: #7654d6; --ink: #211a32; --muted: #746d80; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body { min-height: 100vh; font-family: "DM Sans", sans-serif; color: var(--ink); background: #faf9fc; }
+    .auth-layout { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(420px, .92fr); }
+    .intro { padding: clamp(30px, 6vw, 82px); color: #fff; background: radial-gradient(circle at 85% 12%, rgba(255,255,255,.2), transparent 28%), linear-gradient(145deg,#36205f 0%,#6743b7 55%,#a479e8 100%); display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; position: relative; }
+    .intro:after { content: ""; position: absolute; width: 410px; height: 410px; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; right: -170px; bottom: -180px; box-shadow: 0 0 0 38px rgba(255,255,255,.035),0 0 0 78px rgba(255,255,255,.025); }
+    .brand { display: flex; align-items: center; gap: 12px; font: 800 17px Manrope,sans-serif; letter-spacing: -.3px; }
+    .brand-mark { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: #f4cf67; color: #352255; font: 800 18px Manrope,sans-serif; box-shadow: 0 8px 22px #20123d44; }
+    .intro-copy { max-width: 580px; position: relative; z-index: 1; margin: 70px 0; }
+    .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; opacity: .78; }
+    h1 { font: 800 clamp(38px, 5vw, 66px)/1.08 Manrope,sans-serif; letter-spacing: -2.7px; margin: 18px 0; }
+    h1 span { color: #f7dd8b; }
+    .intro-copy p:last-child { color: #eee8ff; max-width: 430px; line-height: 1.7; font-size: 16px; }
+    .features { display: flex; flex-wrap: wrap; gap: 10px; position: relative; z-index: 1; }
+    .feature { border: 1px solid #ffffff3d; background: #ffffff12; padding: 9px 13px; border-radius: 999px; font-size: 12px; color: #fff; }
+    .panel { display: grid; place-items: center; padding: 34px; }
+    .form-card { width: min(100%, 410px); }
+    .small-brand { display: none; margin-bottom: 35px; }
+    .form-card .eyebrow { color: var(--purple); opacity: 1; margin: 0 0 10px; }
+    h2 { font: 800 30px Manrope,sans-serif; letter-spacing: -.8px; margin: 0 0 9px; }
+    .subheading { color: var(--muted); margin: 0 0 28px; line-height: 1.6; font-size: 14px; }
+    .field { display: block; font-size: 13px; font-weight: 700; margin: 0 0 17px; }
+    .field input { display: block; width: 100%; margin-top: 7px; padding: 13px 14px; border: 1px solid #e1dce9; border-radius: 9px; background: #fff; color: var(--ink); font: 500 15px "DM Sans",sans-serif; outline: none; transition: border-color .2s,box-shadow .2s; }
+    .field input:focus { border-color: var(--purple); box-shadow: 0 0 0 4px #7654d61a; }
+    .submit { width: 100%; border: 0; border-radius: 9px; padding: 14px; margin-top: 4px; background: var(--purple); color: white; font: 700 15px "DM Sans",sans-serif; cursor: pointer; box-shadow: 0 8px 18px #7654d633; }
+    .submit:hover { background: #6240c1; }
+    .error { border: 1px solid #fecaca; border-radius: 8px; background: #fff1f2; color: #b42332; padding: 11px 13px; font-size: 13px; line-height: 1.5; margin: 0 0 17px; }
+    .secure-note { color: #8d8797; font-size: 12px; text-align: center; margin: 20px 0 0; }
+    .footer { position: fixed; bottom: 14px; right: 20px; color: #aaa4b2; font-size: 11px; }
+    @media (max-width: 800px) { .auth-layout { grid-template-columns: 1fr; } .intro { padding: 24px 23px 27px; min-height: 235px; } .intro-copy { margin: 36px 0 25px; } h1 { font-size: 35px; letter-spacing: -1.2px; margin: 10px 0; } .intro-copy .eyebrow { margin-bottom: 8px; } .intro-copy p:last-child { font-size: 14px; margin-bottom: 0; } .features { display: none; } .panel { padding: 35px 22px 65px; align-items: start; } .small-brand { display: flex; } .footer { position: static; text-align: center; padding: 0 0 16px; } }
+    @media (max-width: 420px) { .intro { min-height: 215px; } .brand { font-size: 15px; } .brand-mark { width: 36px; height: 36px; } .panel { padding-inline: 20px; } h2 { font-size: 27px; } }
+  </style>
+</head>
+<body>
+  <main class="auth-layout">
+    <section class="intro" aria-label="Sobre o Gerador de Cartazes">
+      <div class="brand"><span class="brand-mark">GC</span><span>Gerador de Cartazes</span></div>
+      <div class="intro-copy">
+        <p class="eyebrow">CRIATIVIDADE QUE VENDE</p>
+        <h1>Suas ofertas,<br><span>prontas para brilhar.</span></h1>
+        <p>Crie cartazes promocionais com a sua identidade, visualize o resultado e baixe arquivos prontos para imprimir.</p>
+      </div>
+      <div class="features"><span class="feature">✦ Pré-visualização instantânea</span><span class="feature">✦ PDF pronto para impressão</span><span class="feature">✦ Modelos e formatos A4</span></div>
+    </section>
+    <section class="panel">
+      <div class="form-card">
+        <div class="brand small-brand"><span class="brand-mark">GC</span><span>Gerador de Cartazes</span></div>
+        <p class="eyebrow">ÁREA EXCLUSIVA</p>
+        <h2>Acesse sua conta</h2>
+        <p class="subheading">Entre para começar a montar seus cartazes de ofertas.</p>
+        {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+        <form method="post" action="{{ url_for('cartaz_login') }}">
+          <label class="field" for="login">Login
+            <input id="login" name="login" type="text" autocomplete="username" placeholder="Seu usuário" required autofocus>
+          </label>
+          <label class="field" for="password">Senha
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Sua senha" required>
+          </label>
+          <button class="submit" type="submit">Entrar no gerador <span aria-hidden="true">→</span></button>
+        </form>
+        <p class="secure-note">Acesso protegido · Use as credenciais fornecidas pelo administrador.</p>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">Gerador de Cartazes · Acesso seguro</footer>
+</body>
+</html>
