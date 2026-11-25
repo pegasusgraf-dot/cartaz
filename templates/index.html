@@ -168,10 +168,20 @@
       });
     });
 
+    async function fetchAutenticado(url, opcoes = {}) {
+      const headers = Object.assign({ "X-Requested-With": "XMLHttpRequest" }, opcoes.headers || {});
+      const res = await fetch(url, Object.assign({}, opcoes, { headers, credentials: "same-origin" }));
+      if (res.status === 401 || res.redirected && res.url.includes("/login")) {
+        window.location.href = "/login";
+        return null;
+      }
+      return res;
+    }
+
     async function carregarFundos() {
       try {
-        const res = await fetch("/api/fundos");
-        if (!res.ok) return;
+        const res = await fetchAutenticado("/api/fundos");
+        if (!res || !res.ok) return;
         const data = await res.json();
         const sel = document.getElementById("fundo_preset");
         (data.fundos || []).forEach((f) => {
@@ -212,7 +222,8 @@
       fd.append("validade", document.getElementById("validade").value);
       fd.append("observacao", document.getElementById("observacao").value);
 
-      const res = await fetch("/preview_avulso", { method: "POST", body: fd });
+      const res = await fetchAutenticado("/preview_avulso", { method: "POST", body: fd });
+      if (!res) return;
       if (!res.ok) return mostrarErroPreview(await res.text());
       mostrarImagemPreview(await res.blob());
     }
@@ -227,7 +238,8 @@
       fd.append("validade", document.getElementById("validade").value);
       fd.append("observacao", document.getElementById("observacao").value);
 
-      const res = await fetch("/gerar_avulso", { method: "POST", body: fd });
+      const res = await fetchAutenticado("/gerar_avulso", { method: "POST", body: fd });
+      if (!res) return;
       if (!res.ok) return alert(await res.text());
       const blob = await res.blob();
       const a = document.createElement("a");
@@ -245,13 +257,15 @@
     }
 
     async function atualizarPreviewPlanilha() {
-      const res = await fetch("/preview", { method: "POST", body: montarFormDataPlanilha() });
+      const res = await fetchAutenticado("/preview", { method: "POST", body: montarFormDataPlanilha() });
+      if (!res) return;
       if (!res.ok) return mostrarErroPreview(await res.text());
       mostrarImagemPreview(await res.blob());
     }
 
     async function baixarUnicoPlanilha() {
-      const res = await fetch("/gerar_unico", { method: "POST", body: montarFormDataPlanilha() });
+      const res = await fetchAutenticado("/gerar_unico", { method: "POST", body: montarFormDataPlanilha() });
+      if (!res) return;
       if (!res.ok) return alert(await res.text());
       const blob = await res.blob();
       const a = document.createElement("a");
@@ -261,7 +275,8 @@
     }
 
     async function baixarLoteZip() {
-      const res = await fetch("/gerar", { method: "POST", body: montarFormDataPlanilha() });
+      const res = await fetchAutenticado("/gerar", { method: "POST", body: montarFormDataPlanilha() });
+      if (!res) return;
       if (!res.ok) return alert(await res.text());
       const blob = await res.blob();
       const a = document.createElement("a");
