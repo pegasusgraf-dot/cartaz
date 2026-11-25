@@ -1,11 +1,22 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from functools import wraps
 import io
 import os
 import re
 import zipfile
 import fitz  # PyMuPDF
 import pandas as pd
-from flask import Flask, jsonify, render_template, request, send_file, send_from_directory
+from flask import (
+    Flask,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    send_from_directory,
+    session,
+    url_for,
+)
 from PIL import Image
 from reportlab.lib.units import cm
 from reportlab.lib.utils import ImageReader
@@ -16,20 +27,41 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
+IS_VERCEL = bool(os.environ.get("VERCEL"))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PASTA_UPLOAD = os.path.join(BASE_DIR, "uploads")
-PASTA_SAIDA = os.path.join(BASE_DIR, "cartazes_gerados")
-PASTA_TEMP = os.path.join(BASE_DIR, "temp_zip")
-PASTA_FUNDOS = os.path.join(BASE_DIR, "fundos_prontos")
+WORK_BASE = "/tmp" if IS_VERCEL else BASE_DIR
 
-os.makedirs(PASTA_UPLOAD, exist_ok=True)
-os.makedirs(PASTA_SAIDA, exist_ok=True)
-os.makedirs(PASTA_TEMP, exist_ok=True)
-os.makedirs(PASTA_FUNDOS, exist_ok=True)
+PASTA_UPLOAD = os.path.join(WORK_BASE, "uploads")
+PASTA_SAIDA = os.path.join(WORK_BASE, "cartazes_gerados")
+PASTA_TEMP = os.path.join(WORK_BASE, "temp_zip")
+PASTA_FUNDOS = os.path.join(BASE_DIR, "fundos_prontos")
+PASTA_FONTES = os.path.join(BASE_DIR, "fontes")
+
+for pasta in (PASTA_UPLOAD, PASTA_SAIDA, PASTA_TEMP):
+    os.makedirs(pasta, exist_ok=True)
+
+# Configuracao de sessao e autenticacao
+CARTAZ_LOGIN = (os.environ.get("CARTAZ_LOGIN") or "").strip()
+CARTAZ_PASSWORD = (os.environ.get("CARTAZ_PASSWORD") or "").strip()
+CARTAZ_SECRET_KEY = (os.environ.get("CARTAZ_SECRET_KEY") or "").strip()
+
+if CARTAZ_SECRET_KEY:
+    app.secret_key = CARTAZ_SECRET_KEY
+elif not IS_VERCEL:
+    app.secret_key = "dev-local-secret-key-change-in-production"
+else:
+    # Em producao na Vercel sem CARTAZ_SECRET_KEY configurada, gera chave temporaria e bloqueia login
+    app.secret_key = os.urandom(32).hex()
+
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+if IS_VERCEL:
+    app.config["SESSION_COOKIE_SECURE"] = True
 
 EXTENSOES_IMAGEM = (".jpg", ".jpeg", ".png", ".webp")
 
-# Folha vertical padrão (proporção A4 ~ 1 : 1.414)
+# Folha vertical padrao (proporcao A4 ~ 1 : 1.414)
 LARGURA_CARTAZ = 1240
 ALTURA_CARTAZ = 1754
 
@@ -42,18 +74,88 @@ ALTURA_DOBRA_A4_PT = 4.0 * cm
 ALTURA_A4_RETRATO_PT = 29.7 * cm
 ALTURA_A4_PAISAGEM_PT = 21.0 * cm
 
-# --- REGISTRO DE FONTES ---
-try:
-    pdfmetrics.registerFont(TTFont("FonteTitulo", "C:/Windows/Fonts/impact.ttf"))
-    pdfmetrics.registerFont(TTFont("FontePrecoNormal", "C:/Windows/Fonts/impact.ttf"))
-    pdfmetrics.registerFont(TTFont("FontePrecoOferta", "C:/Windows/Fonts/impact.ttf"))
-    pdfmetrics.registerFont(TTFont("FonteDetalhes", "C:/Windows/Fonts/impact.ttf"))
-except Exception:
-    pdfmetrics.registerFont(TTFont("FonteTitulo", "Helvetica-Bold"))
-    pdfmetrics.registerFont(TTFont("FontePrecoNormal", "Helvetica"))
-    pdfmetrics.registerFont(TTFont("FontePrecoOferta", "Helvetica-Bold"))
-    pdfmetrics.registerFont(TTFont("FonteDetalhes", "Helvetica"))
-# ---------------------------------------
+
+def _encontrar_fonte(nomes_preferenciais, fallback_padrao):
+    candidatos = []
+    if os.path.isdir(PASTA_FONTES):
+        for nome in nomes_preferenciais:
+            caminho_local = os.path.join(PASTA_FONTES, nome)
+            if os.path.isfile(caminho_local):
+                candidatos.append(caminho_local)
+        for arquivo in sorted(os.listdir(PASTA_FONTES)):
+            if arquivo.lower().endswith(".ttf"):
+                c = os.path.join(PASTA_FONTES, arquivo)
+                if c not in candidatos:
+                    candidatos.append(c)
+
+    if os.name == "nt":
+        for nome in nomes_preferenciais:
+            c_win = os.path.join("C:/Windows/Fonts", nome)
+            if os.path.isfile(c_win):
+                candidatos.append(c_win)
+
+    for caminho_ttf in candidatos:
+        try:
+            pdfmetrics.registerFont(TTFont("_temp_font_check", caminho_ttf))
+            return caminho_ttf
+        except Exception:
+            continue
+
+    return None
+
+
+def registrar_fontes():
+    fontes_map = {
+        "FonteTitulo": (["impact.ttf", "Impact.ttf", "arialbd.ttf", "Arial-Bold.ttf"], "Helvetica-Bold"),
+        "FontePrecoNormal": (["impact.ttf", "Impact.ttf", "arial.ttf", "Arial.ttf"], "Helvetica"),
+        "FontePrecoOferta": (["impact.ttf", "Impact.ttf", "arialbd.ttf", "Arial-Bold.ttf"], "Helvetica-Bold"),
+        "FonteDetalhes": (["impact.ttf", "Impact.ttf", "arial.ttf", "Arial.ttf"], "Helvetica"),
+    }
+    for nome_reg, (preferencias, fallback) in fontes_map.items():
+        caminho_ttf = _encontrar_fonte(preferencias, fallback)
+        if caminho_ttf:
+            try:
+                pdfmetrics.registerFont(TTFont(nome_reg, caminho_ttf))
+                continue
+            except Exception:
+                pass
+        # Usa fonte padrao ja embutida no ReportLab
+        if nome_reg not in pdfmetrics.getRegisteredFontNames():
+            # Alias via Helvetica / Helvetica-Bold
+            try:
+                from reportlab.pdfbase.pdfmetrics import registerFontFamily
+                registerFontFamily(nome_reg, normal=fallback, bold="Helvetica-Bold")
+            except Exception:
+                pass
+
+
+registrar_fontes()
+
+
+def obter_nome_fonte(alias_fonte, fallback_padrao):
+    if alias_fonte in pdfmetrics.getRegisteredFontNames():
+        return alias_fonte
+    return fallback_padrao
+
+
+def autenticado():
+    return bool(session.get("autenticado") is True)
+
+
+def auth_configurada():
+    return bool(CARTAZ_LOGIN and CARTAZ_PASSWORD and CARTAZ_SECRET_KEY)
+
+
+def login_obrigatorio_rota(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not autenticado():
+            if request.path.startswith("/api/"):
+                return jsonify({"erro": "Nao autenticado"}), 401
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+
+    return decorated
 
 
 def parse_bool_form(valor, padrao=False):
@@ -138,7 +240,7 @@ def resolver_imagem_fundo(request_obj, fallback_ultimo_upload=False):
         if caminho_preset.startswith(base_abs + os.sep) and os.path.isfile(caminho_preset):
             return caminho_preset
 
-    if fallback_ultimo_upload:
+    if fallback_ultimo_upload and os.path.isdir(PASTA_UPLOAD):
         arquivos_upload = [
             os.path.join(PASTA_UPLOAD, f)
             for f in os.listdir(PASTA_UPLOAD)
@@ -649,10 +751,10 @@ def criar_cartaz_pdf(
         c.drawImage(img_reader, 0, y_img, width=largura_img, height=altura_img, mask="auto")
         altura_topo = altura_img
 
-    f_produto = "FonteTitulo"
-    f_preco_normal = "FontePrecoNormal"
-    f_preco_oferta = "FontePrecoOferta"
-    f_detalhes = "FonteDetalhes"
+    f_produto = obter_nome_fonte("FonteTitulo", "Helvetica-Bold")
+    f_preco_normal = obter_nome_fonte("FontePrecoNormal", "Helvetica")
+    f_preco_oferta = obter_nome_fonte("FontePrecoOferta", "Helvetica-Bold")
+    f_detalhes = obter_nome_fonte("FonteDetalhes", "Helvetica")
 
     margem_x = int(largura * (0.08 if eh_horizontal else 0.06))
     largura_caixa = largura - (margem_x * 2)
@@ -671,7 +773,7 @@ def criar_cartaz_pdf(
     tamanho_fonte_limite = int(altura * (0.036 if eh_horizontal else 0.038))
     y_limite = int(altura * (0.026 if eh_horizontal else 0.118))
 
-    # 1. NOME DO PRODUTO CENTRALIZADO COM ESPAÇAMENTO NATURAL DA ESCRITA
+    # 1. NOME DO PRODUTO CENTRALIZADO COM ESPACAMENTO NATURAL DA ESCRITA
     nome_prod = str(dados.get("descricao_produtos", "PRODUTO")).upper()
     if tem_dobra:
         tam_nome = int(altura * (0.058 if eh_horizontal else 0.055))
@@ -697,7 +799,7 @@ def criar_cartaz_pdf(
     else:
         y_base_produto = y_nome_inicial
 
-    # 2. CAMPOS EXTRAS E OBSERVAÇÕES (SEMPRE ABAIXO DO PRODUTO)
+    # 2. CAMPOS EXTRAS E OBSERVACOES (SEMPRE ABAIXO DO PRODUTO)
     texto_extra = dados.get("campo_extra", "")
     obs_extra = dados.get("observacao_extra", "")
     texto_importa = obter_campo_importa(dados)
@@ -770,7 +872,7 @@ def criar_cartaz_pdf(
     tem_preco_por = tem_valor_preco_valido(p_oferta_bruto)
     mostrar_por_apenas = tem_preco_de and tem_preco_por
 
-    # 3. PREÇO "POR", "POR APENAS" E VALOR "DE"
+    # 3. PRECO "POR", "POR APENAS" E VALOR "DE"
     tamanho_fonte_preco = int(altura * (0.255 if eh_horizontal else 0.180))
     if eh_horizontal:
         y_pos_preco = int(altura * 0.135) if tem_limite else int(altura * 0.095)
@@ -879,7 +981,7 @@ def criar_cartaz_pdf(
         c.setFillColorRGB(0, 0, 0)
         c.drawString(x_inicial_limite + w_ini + w_val, y_limite, txt_limite_fim)
 
-    # 6. VALIDADE EM DUAS LINHAS E OBSERVAÇÃO / RODAPÉ
+    # 6. VALIDADE EM DUAS LINHAS E OBSERVACAO / RODAPE
     validade_info = interpretar_intervalo_validade(
         dados.get("validade", ""),
         dados.get("data_inicio", ""),
@@ -932,23 +1034,55 @@ def criar_cartaz_pdf(
     c.restoreState()
 
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if autenticado():
+        return redirect(url_for("index"))
+
+    erro = None
+    if request.method == "POST":
+        if not auth_configurada():
+            erro = "Configure CARTAZ_LOGIN, CARTAZ_PASSWORD e CARTAZ_SECRET_KEY nas variaveis de ambiente."
+        else:
+            usuario = (request.form.get("usuario") or "").strip()
+            senha = request.form.get("senha") or ""
+            if usuario == CARTAZ_LOGIN and senha == CARTAZ_PASSWORD:
+                session.permanent = True
+                session["autenticado"] = True
+                session["usuario"] = usuario
+                return redirect(url_for("index"))
+            erro = "Usuario ou senha invalidos."
+
+    return render_template("login.html", erro=erro, auth_ok=auth_configurada())
+
+
+@app.route("/logout", methods=["GET", "POST"])
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
 @app.route("/")
+@login_obrigatorio_rota
 def index():
-    return render_template("index.html")
+    return render_template("index.html", usuario=session.get("usuario", ""))
 
 
 @app.route("/api/fundos", methods=["GET"])
+@login_obrigatorio_rota
 def api_listar_fundos():
     return jsonify({"fundos": listar_imagens_pasta_fundos()})
 
 
 @app.route("/fundos/<path:filename>", methods=["GET"])
+@login_obrigatorio_rota
 def servir_fundo_pasta(filename):
     nome_limpo = os.path.basename(filename)
     return send_from_directory(os.path.abspath(PASTA_FUNDOS), nome_limpo)
 
 
 @app.route("/preview", methods=["POST"])
+@login_obrigatorio_rota
 def preview():
     try:
         if "planilha" not in request.files:
@@ -1011,21 +1145,19 @@ def preview():
         c.save()
         pdf_buffer.seek(0)
 
-        try:
-            doc = fitz.open(stream=pdf_buffer.read(), filetype="pdf")
-            page = doc.load_page(0)
-            pix = page.get_pixmap(dpi=120)
-            img_byte_arr = io.BytesIO(pix.tobytes("png"))
-            img_byte_arr.seek(0)
-            return send_file(img_byte_arr, mimetype="image/png")
-        except ImportError:
-            return "Execute no terminal: pip install pymupdf", 500
+        doc = fitz.open(stream=pdf_buffer.read(), filetype="pdf")
+        page = doc.load_page(0)
+        pix = page.get_pixmap(dpi=120)
+        img_byte_arr = io.BytesIO(pix.tobytes("png"))
+        img_byte_arr.seek(0)
+        return send_file(img_byte_arr, mimetype="image/png")
 
     except Exception as e:
         return str(e), 500
 
 
 @app.route("/preview_avulso", methods=["POST"])
+@login_obrigatorio_rota
 def preview_avulso():
     try:
         form = request.form
@@ -1101,6 +1233,7 @@ def preview_avulso():
 
 
 @app.route("/gerar", methods=["POST"])
+@login_obrigatorio_rota
 def gerar():
     try:
         if "planilha" not in request.files:
@@ -1191,6 +1324,7 @@ def gerar():
 
 
 @app.route("/gerar_unico", methods=["POST"])
+@login_obrigatorio_rota
 def gerar_unico():
     try:
         if "planilha" not in request.files:
@@ -1263,6 +1397,7 @@ def gerar_unico():
 
 
 @app.route("/gerar_avulso", methods=["POST"])
+@login_obrigatorio_rota
 def gerar_avulso():
     try:
         form = request.form
