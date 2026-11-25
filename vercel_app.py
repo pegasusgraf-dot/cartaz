@@ -35,7 +35,8 @@ os.makedirs = _vercel_makedirs
 try:
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
-    import appp as poster_app
+    # The repository's Flask module is app.py (not appp.py).
+    import app as poster_app
 finally:
     os.makedirs = _original_makedirs
 

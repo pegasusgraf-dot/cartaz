@@ -30,7 +30,7 @@ pip install -r requirements.txt
 Defina `CARTAZ_LOGIN`, `CARTAZ_PASSWORD` e `CARTAZ_SECRET_KEY` no ambiente (o arquivo `.env.example` serve como referência; não contém credenciais válidas) e inicie:
 
 ```bash
-python appp.py
+python app.py
 ```
 
 Abra `http://localhost:2000`. As credenciais são as mesmas variáveis de ambiente usadas no deploy.
