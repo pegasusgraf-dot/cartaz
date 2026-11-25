@@ -38,6 +38,11 @@
     .btn-amarelo { background: #eab308; color: #0f172a; }
     .btn-azul { background: #3b82f6; color: #fff; }
     .btn-verde { background: #22c55e; color: #052e16; }
+    .preview-topo {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+    }
+    .preview-topo h2 { margin: 0; }
+    .status-preview { font-size: 0.8rem; color: #94a3b8; }
     .preview-box {
       min-height: 440px; display: grid; place-items: center;
       background: #0f172a; border: 1px dashed #475569; border-radius: 10px; padding: 12px;
@@ -151,27 +156,44 @@
     </div>
 
     <div class="painel">
-      <h2>Pré-visualização</h2>
+      <div class="preview-topo">
+        <h2>Pré-visualização</h2>
+        <span id="status-preview" class="status-preview">Atualiza automaticamente</span>
+      </div>
       <div id="preview-box" class="preview-box">
-        <span style="color:#94a3b8;">Clique em "Pré-visualizar" para ver o cartaz.</span>
+        <span style="color:#94a3b8;">Digite os dados ao lado para visualizar o cartaz.</span>
       </div>
     </div>
   </div>
 
   <script>
+    let abaAtual = "avulso";
+    let timerPreviewAvulso = null;
+    let controllerPreviewAvulso = null;
+    let ultimaUrlPreview = null;
+
     document.querySelectorAll(".aba").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".aba").forEach((b) => b.classList.remove("ativa"));
         document.querySelectorAll(".secao").forEach((s) => s.classList.remove("ativa"));
         btn.classList.add("ativa");
-        document.getElementById("sec-" + btn.dataset.aba).classList.add("ativa");
+        abaAtual = btn.dataset.aba;
+        document.getElementById("sec-" + abaAtual).classList.add("ativa");
+        if (abaAtual === "avulso") {
+          agendarPreviewAvulso(100);
+        }
       });
     });
+
+    function definirStatusPreview(texto) {
+      const el = document.getElementById("status-preview");
+      if (el) el.textContent = texto;
+    }
 
     async function fetchAutenticado(url, opcoes = {}) {
       const headers = Object.assign({ "X-Requested-With": "XMLHttpRequest" }, opcoes.headers || {});
       const res = await fetch(url, Object.assign({}, opcoes, { headers, credentials: "same-origin" }));
-      if (res.status === 401 || res.redirected && res.url.includes("/login")) {
+      if (res.status === 401 || (res.redirected && res.url.includes("/login"))) {
         window.location.href = "/login";
         return null;
       }
@@ -204,15 +226,35 @@
     }
 
     function mostrarImagemPreview(blob) {
-      const url = URL.createObjectURL(blob);
-      document.getElementById("preview-box").innerHTML = `<img src="${url}" alt="Prévia do cartaz" />`;
+      if (ultimaUrlPreview) {
+        URL.revokeObjectURL(ultimaUrlPreview);
+      }
+      ultimaUrlPreview = URL.createObjectURL(blob);
+      document.getElementById("preview-box").innerHTML = `<img src="${ultimaUrlPreview}" alt="Prévia do cartaz" />`;
+      definirStatusPreview("Atualizado");
     }
 
     function mostrarErroPreview(texto) {
       document.getElementById("preview-box").innerHTML = `<div class="msg-erro">${texto}</div>`;
+      definirStatusPreview("Erro na prévia");
+    }
+
+    function agendarPreviewAvulso(delayMs = 350) {
+      if (abaAtual !== "avulso") return;
+      clearTimeout(timerPreviewAvulso);
+      definirStatusPreview("Digitando...");
+      timerPreviewAvulso = setTimeout(() => {
+        atualizarPreviewAvulso();
+      }, delayMs);
     }
 
     async function atualizarPreviewAvulso() {
+      if (controllerPreviewAvulso) {
+        controllerPreviewAvulso.abort();
+      }
+      controllerPreviewAvulso = new AbortController();
+      definirStatusPreview("Atualizando prévia...");
+
       const fd = montarFormDataBase();
       fd.append("descricao_produtos", document.getElementById("descricao_produtos").value);
       fd.append("preco_normal", document.getElementById("preco_normal").value);
@@ -222,10 +264,19 @@
       fd.append("validade", document.getElementById("validade").value);
       fd.append("observacao", document.getElementById("observacao").value);
 
-      const res = await fetchAutenticado("/preview_avulso", { method: "POST", body: fd });
-      if (!res) return;
-      if (!res.ok) return mostrarErroPreview(await res.text());
-      mostrarImagemPreview(await res.blob());
+      try {
+        const res = await fetchAutenticado("/preview_avulso", {
+          method: "POST",
+          body: fd,
+          signal: controllerPreviewAvulso.signal,
+        });
+        if (!res) return;
+        if (!res.ok) return mostrarErroPreview(await res.text());
+        mostrarImagemPreview(await res.blob());
+      } catch (err) {
+        if (err.name === "AbortError") return;
+        mostrarErroPreview("Erro ao atualizar prévia em tempo real.");
+      }
     }
 
     async function baixarAvulso() {
@@ -257,6 +308,7 @@
     }
 
     async function atualizarPreviewPlanilha() {
+      definirStatusPreview("Gerando prévia...");
       const res = await fetchAutenticado("/preview", { method: "POST", body: montarFormDataPlanilha() });
       if (!res) return;
       if (!res.ok) return mostrarErroPreview(await res.text());
@@ -285,7 +337,40 @@
       a.click();
     }
 
-    carregarFundos();
+    // Dispara prévia automática enquanto você digita
+    [
+      "descricao_produtos",
+      "preco_normal",
+      "preco_oferta",
+      "campo_extra",
+      "limite_por_cliente",
+      "validade",
+      "observacao",
+    ].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener("input", () => agendarPreviewAvulso(350));
+        el.addEventListener("change", () => agendarPreviewAvulso(150));
+      }
+    });
+
+    // Dispara prévia automática ao trocar formato, fundo ou checkbox
+    ["formato", "fundo_preset", "fundo_file", "fundo_paralelogramo"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener("change", () => {
+          if (abaAtual === "avulso") {
+            agendarPreviewAvulso(150);
+          } else if (document.getElementById("planilha_file").files[0] && document.getElementById("codigo_produto").value.trim()) {
+            atualizarPreviewPlanilha();
+          }
+        });
+      }
+    });
+
+    carregarFundos().then(() => {
+      atualizarPreviewAvulso();
+    });
   </script>
 </body>
 </html>
