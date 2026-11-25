@@ -40,7 +40,6 @@ PASTA_FONTES = os.path.join(BASE_DIR, "fontes")
 for pasta in (PASTA_UPLOAD, PASTA_SAIDA, PASTA_TEMP):
     os.makedirs(pasta, exist_ok=True)
 
-# Configuracao de sessao e autenticacao
 CARTAZ_LOGIN = (os.environ.get("CARTAZ_LOGIN") or "").strip()
 CARTAZ_PASSWORD = (os.environ.get("CARTAZ_PASSWORD") or "").strip()
 CARTAZ_SECRET_KEY = (os.environ.get("CARTAZ_SECRET_KEY") or "").strip()
@@ -50,7 +49,6 @@ if CARTAZ_SECRET_KEY:
 elif not IS_VERCEL:
     app.secret_key = "dev-local-secret-key-change-in-production"
 else:
-    # Fallback fixo evita invalidar sessoes entre cold starts caso a env nao esteja setada
     app.secret_key = "cartaz-vercel-session-fallback-chave-fixa"
 
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)
@@ -59,15 +57,12 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 EXTENSOES_IMAGEM = (".jpg", ".jpeg", ".png", ".webp")
 
-# Folha vertical padrao (proporcao A4 ~ 1 : 1.414)
 LARGURA_CARTAZ = 1240
 ALTURA_CARTAZ = 1754
 
-# Folha horizontal (A4 Paisagem ~ 1.414 : 1)
 LARGURA_PAISAGEM = 1754
 ALTURA_PAISAGEM = 1240
 
-# Margem de dobra no topo em pontos (A4 real = 595.28 x 841.89 pt, onde 4 cm = 113.39 pt)
 ALTURA_DOBRA_A4_PT = 4.0 * cm
 ALTURA_A4_RETRATO_PT = 29.7 * cm
 ALTURA_A4_PAISAGEM_PT = 21.0 * cm
@@ -154,7 +149,7 @@ def login_obrigatorio_rota(f):
             )
             if is_ajax:
                 return jsonify({"erro": "Sessao expirada ou nao autenticado"}), 401
-            return redirect(url_for("login"))
+            return render_template("login.html", erro=None)
         return f(*args, **kwargs)
 
     return decorated
@@ -1043,13 +1038,14 @@ def login():
             usuario = (request.form.get("usuario") or "").strip()
             senha = request.form.get("senha") or ""
             if usuario == CARTAZ_LOGIN and senha == CARTAZ_PASSWORD:
+                session.clear()
                 session.permanent = True
                 session["autenticado"] = True
                 session["usuario"] = usuario
                 return redirect(url_for("index"))
             erro = "Usuario ou senha invalidos."
 
-    return render_template("login.html", erro=erro, auth_ok=auth_configurada())
+    return render_template("login.html", erro=erro)
 
 
 @app.route("/logout", methods=["GET", "POST"])
@@ -1059,8 +1055,9 @@ def logout():
 
 
 @app.route("/")
-@login_obrigatorio_rota
 def index():
+    if not autenticado():
+        return render_template("login.html", erro=None)
     return render_template("index.html", usuario=session.get("usuario", ""))
 
 
