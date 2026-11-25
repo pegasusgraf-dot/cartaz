@@ -119,6 +119,10 @@
           <input id="campo_extra" type="text" placeholder="Ex: 3 UNIDADES" />
         </div>
         <div class="campo">
+          <label for="observacao_extra">Observação Extra (abaixo de Leve Por, opcional)</label>
+          <input id="observacao_extra" type="text" placeholder="Ex: cada unidade sai por R$ 8,30" />
+        </div>
+        <div class="campo">
           <label for="limite_por_cliente">Limite por Cliente (opcional)</label>
           <input id="limite_por_cliente" type="text" placeholder="Ex: 6 UN" />
         </div>
@@ -225,6 +229,17 @@
       return fd;
     }
 
+    function preencherCamposAvulsoFormData(fd) {
+      fd.append("descricao_produtos", document.getElementById("descricao_produtos").value);
+      fd.append("preco_normal", document.getElementById("preco_normal").value);
+      fd.append("preco_oferta", document.getElementById("preco_oferta").value || "0");
+      fd.append("campo_extra", document.getElementById("campo_extra").value);
+      fd.append("observacao_extra", document.getElementById("observacao_extra").value);
+      fd.append("limite_por_cliente", document.getElementById("limite_por_cliente").value);
+      fd.append("validade", document.getElementById("validade").value);
+      fd.append("observacao", document.getElementById("observacao").value);
+    }
+
     function mostrarImagemPreview(blob) {
       if (ultimaUrlPreview) {
         URL.revokeObjectURL(ultimaUrlPreview);
@@ -256,13 +271,7 @@
       definirStatusPreview("Atualizando prévia...");
 
       const fd = montarFormDataBase();
-      fd.append("descricao_produtos", document.getElementById("descricao_produtos").value);
-      fd.append("preco_normal", document.getElementById("preco_normal").value);
-      fd.append("preco_oferta", document.getElementById("preco_oferta").value || "0");
-      fd.append("campo_extra", document.getElementById("campo_extra").value);
-      fd.append("limite_por_cliente", document.getElementById("limite_por_cliente").value);
-      fd.append("validade", document.getElementById("validade").value);
-      fd.append("observacao", document.getElementById("observacao").value);
+      preencherCamposAvulsoFormData(fd);
 
       try {
         const res = await fetchAutenticado("/preview_avulso", {
@@ -281,13 +290,7 @@
 
     async function baixarAvulso() {
       const fd = montarFormDataBase();
-      fd.append("descricao_produtos", document.getElementById("descricao_produtos").value);
-      fd.append("preco_normal", document.getElementById("preco_normal").value);
-      fd.append("preco_oferta", document.getElementById("preco_oferta").value);
-      fd.append("campo_extra", document.getElementById("campo_extra").value);
-      fd.append("limite_por_cliente", document.getElementById("limite_por_cliente").value);
-      fd.append("validade", document.getElementById("validade").value);
-      fd.append("observacao", document.getElementById("observacao").value);
+      preencherCamposAvulsoFormData(fd);
 
       const res = await fetchAutenticado("/gerar_avulso", { method: "POST", body: fd });
       if (!res) return;
@@ -337,12 +340,12 @@
       a.click();
     }
 
-    // Dispara prévia automática enquanto você digita
     [
       "descricao_produtos",
       "preco_normal",
       "preco_oferta",
       "campo_extra",
+      "observacao_extra",
       "limite_por_cliente",
       "validade",
       "observacao",
@@ -354,7 +357,6 @@
       }
     });
 
-    // Dispara prévia automática ao trocar formato, fundo ou checkbox
     ["formato", "fundo_preset", "fundo_file", "fundo_paralelogramo"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) {
