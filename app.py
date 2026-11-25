@@ -40,8 +40,10 @@ PASTA_FONTES = os.path.join(BASE_DIR, "fontes")
 for pasta in (PASTA_UPLOAD, PASTA_SAIDA, PASTA_TEMP):
     os.makedirs(pasta, exist_ok=True)
 
+# Configuracao de sessao e autenticacao (suporta unico usuario ou varios via CARTAZ_USERS)
 CARTAZ_LOGIN = (os.environ.get("CARTAZ_LOGIN") or "").strip()
 CARTAZ_PASSWORD = (os.environ.get("CARTAZ_PASSWORD") or "").strip()
+CARTAZ_USERS_RAW = (os.environ.get("CARTAZ_USERS") or "").strip()
 CARTAZ_SECRET_KEY = (os.environ.get("CARTAZ_SECRET_KEY") or "").strip()
 
 if CARTAZ_SECRET_KEY:
@@ -51,21 +53,46 @@ elif not IS_VERCEL:
 else:
     app.secret_key = "cartaz-vercel-session-fallback-chave-fixa"
 
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
 EXTENSOES_IMAGEM = (".jpg", ".jpeg", ".png", ".webp")
 
+# Folha vertical padrao (proporcao A4 ~ 1 : 1.414)
 LARGURA_CARTAZ = 1240
 ALTURA_CARTAZ = 1754
 
+# Folha horizontal (A4 Paisagem ~ 1.414 : 1)
 LARGURA_PAISAGEM = 1754
 ALTURA_PAISAGEM = 1240
 
+# Margem de dobra no topo em pontos (A4 real = 595.28 x 841.89 pt, onde 4 cm = 113.39 pt)
 ALTURA_DOBRA_A4_PT = 4.0 * cm
 ALTURA_A4_RETRATO_PT = 29.7 * cm
 ALTURA_A4_PAISAGEM_PT = 21.0 * cm
+
+
+def obter_usuarios_permitidos():
+    """Retorna um dicionario {usuario: senha} combinando CARTAZ_LOGIN/PASSWORD e CARTAZ_USERS."""
+    usuarios = {}
+
+    if CARTAZ_LOGIN and CARTAZ_PASSWORD:
+        usuarios[CARTAZ_LOGIN] = CARTAZ_PASSWORD
+
+    if CARTAZ_USERS_RAW:
+        # Formato esperado: usuario1:senha1,usuario2:senha2
+        for entrada in re.split(r"[,;\n]+", CARTAZ_USERS_RAW):
+            item = entrada.strip()
+            if not item or ":" not in item:
+                continue
+            usuario_item, senha_item = item.split(":", 1)
+            usuario_item = usuario_item.strip()
+            senha_item = senha_item.strip()
+            if usuario_item and senha_item:
+                usuarios[usuario_item] = senha_item
+
+    return usuarios
 
 
 def _encontrar_fonte(nomes_preferenciais):
@@ -115,6 +142,7 @@ def registrar_fontes():
         if nome_reg not in pdfmetrics.getRegisteredFontNames():
             try:
                 from reportlab.pdfbase.pdfmetrics import registerFontFamily
+
                 registerFontFamily(nome_reg, normal=fallback, bold="Helvetica-Bold")
             except Exception:
                 pass
@@ -134,7 +162,7 @@ def autenticado():
 
 
 def auth_configurada():
-    return bool(CARTAZ_LOGIN and CARTAZ_PASSWORD)
+    return bool(obter_usuarios_permitidos())
 
 
 def login_obrigatorio_rota(f):
@@ -1032,12 +1060,13 @@ def login():
 
     erro = None
     if request.method == "POST":
-        if not auth_configurada():
-            erro = "Configure CARTAZ_LOGIN e CARTAZ_PASSWORD nas variaveis de ambiente."
+        usuarios_validos = obter_usuarios_permitidos()
+        if not usuarios_validos:
+            erro = "Configure CARTAZ_LOGIN/CARTAZ_PASSWORD ou CARTAZ_USERS nas variaveis de ambiente."
         else:
             usuario = (request.form.get("usuario") or "").strip()
             senha = request.form.get("senha") or ""
-            if usuario == CARTAZ_LOGIN and senha == CARTAZ_PASSWORD:
+            if usuario in usuarios_validos and usuarios_validos[usuario] == senha:
                 session.clear()
                 session.permanent = True
                 session["autenticado"] = True
