@@ -17,15 +17,14 @@ RUNTIME_DIRS = {"uploads", "cartazes_gerados", "temp_zip"}
 _original_makedirs = os.makedirs
 
 
-def _vercel_makedirs(path, mode=0o777, *, dir_fd=None):
+def _vercel_makedirs(path, mode=0o777, exist_ok=False, *, dir_fd=None):
+    """Redirect generated files to /tmp and preserve os.makedirs' signature."""
     candidate = Path(path)
     if candidate.name in RUNTIME_DIRS and candidate.parent.resolve() == ROOT:
         candidate = RUNTIME_ROOT / candidate.name
     elif candidate.name == "fundos_prontos" and candidate.parent.resolve() == ROOT:
         # Preset backgrounds are deployed read-only; there is no need to create
         # or modify this directory in the serverless environment.
-        if candidate.exists():
-            return None
         return None
     if dir_fd is None:
         return _original_makedirs(candidate, mode=mode, exist_ok=True)
