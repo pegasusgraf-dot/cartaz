@@ -50,14 +50,12 @@ if CARTAZ_SECRET_KEY:
 elif not IS_VERCEL:
     app.secret_key = "dev-local-secret-key-change-in-production"
 else:
-    # Em producao na Vercel sem CARTAZ_SECRET_KEY configurada, gera chave temporaria e bloqueia login
-    app.secret_key = os.urandom(32).hex()
+    # Fallback fixo evita invalidar sessoes entre cold starts caso a env nao esteja setada
+    app.secret_key = "cartaz-vercel-session-fallback-chave-fixa"
 
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=12)
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-if IS_VERCEL:
-    app.config["SESSION_COOKIE_SECURE"] = True
 
 EXTENSOES_IMAGEM = (".jpg", ".jpeg", ".png", ".webp")
 
@@ -75,7 +73,7 @@ ALTURA_A4_RETRATO_PT = 29.7 * cm
 ALTURA_A4_PAISAGEM_PT = 21.0 * cm
 
 
-def _encontrar_fonte(nomes_preferenciais, fallback_padrao):
+def _encontrar_fonte(nomes_preferenciais):
     candidatos = []
     if os.path.isdir(PASTA_FONTES):
         for nome in nomes_preferenciais:
@@ -112,16 +110,14 @@ def registrar_fontes():
         "FonteDetalhes": (["impact.ttf", "Impact.ttf", "arial.ttf", "Arial.ttf"], "Helvetica"),
     }
     for nome_reg, (preferencias, fallback) in fontes_map.items():
-        caminho_ttf = _encontrar_fonte(preferencias, fallback)
+        caminho_ttf = _encontrar_fonte(preferencias)
         if caminho_ttf:
             try:
                 pdfmetrics.registerFont(TTFont(nome_reg, caminho_ttf))
                 continue
             except Exception:
                 pass
-        # Usa fonte padrao ja embutida no ReportLab
         if nome_reg not in pdfmetrics.getRegisteredFontNames():
-            # Alias via Helvetica / Helvetica-Bold
             try:
                 from reportlab.pdfbase.pdfmetrics import registerFontFamily
                 registerFontFamily(nome_reg, normal=fallback, bold="Helvetica-Bold")
@@ -143,15 +139,21 @@ def autenticado():
 
 
 def auth_configurada():
-    return bool(CARTAZ_LOGIN and CARTAZ_PASSWORD and CARTAZ_SECRET_KEY)
+    return bool(CARTAZ_LOGIN and CARTAZ_PASSWORD)
 
 
 def login_obrigatorio_rota(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if not autenticado():
-            if request.path.startswith("/api/"):
-                return jsonify({"erro": "Nao autenticado"}), 401
+            is_ajax = (
+                request.path.startswith("/api/")
+                or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+                or "application/json" in (request.headers.get("Accept") or "")
+                or request.method == "POST"
+            )
+            if is_ajax:
+                return jsonify({"erro": "Sessao expirada ou nao autenticado"}), 401
             return redirect(url_for("login"))
         return f(*args, **kwargs)
 
@@ -773,7 +775,6 @@ def criar_cartaz_pdf(
     tamanho_fonte_limite = int(altura * (0.036 if eh_horizontal else 0.038))
     y_limite = int(altura * (0.026 if eh_horizontal else 0.118))
 
-    # 1. NOME DO PRODUTO CENTRALIZADO COM ESPACAMENTO NATURAL DA ESCRITA
     nome_prod = str(dados.get("descricao_produtos", "PRODUTO")).upper()
     if tem_dobra:
         tam_nome = int(altura * (0.058 if eh_horizontal else 0.055))
@@ -799,7 +800,6 @@ def criar_cartaz_pdf(
     else:
         y_base_produto = y_nome_inicial
 
-    # 2. CAMPOS EXTRAS E OBSERVACOES (SEMPRE ABAIXO DO PRODUTO)
     texto_extra = dados.get("campo_extra", "")
     obs_extra = dados.get("observacao_extra", "")
     texto_importa = obter_campo_importa(dados)
@@ -872,7 +872,6 @@ def criar_cartaz_pdf(
     tem_preco_por = tem_valor_preco_valido(p_oferta_bruto)
     mostrar_por_apenas = tem_preco_de and tem_preco_por
 
-    # 3. PRECO "POR", "POR APENAS" E VALOR "DE"
     tamanho_fonte_preco = int(altura * (0.255 if eh_horizontal else 0.180))
     if eh_horizontal:
         y_pos_preco = int(altura * 0.135) if tem_limite else int(altura * 0.095)
@@ -930,7 +929,6 @@ def criar_cartaz_pdf(
             (0, 0, 0),
         )
 
-    # 4. VALOR "DE" CENTRALIZADO
     if tem_preco_de:
         p_normal_formatado = formatar_preco(p_normal)
         texto_de = f"De: R$ {p_normal_formatado}"
@@ -959,7 +957,6 @@ def criar_cartaz_pdf(
         geom=geom_preco,
     )
 
-    # 5. LIMITE POR CLIENTE CENTRALIZADO (BEM ABAIXO DO FUNDO AMARELO)
     if tem_limite:
         txt_limite_ini = "LIMITE DE: "
         txt_limite_val = str(limite_cliente).strip()
@@ -981,7 +978,6 @@ def criar_cartaz_pdf(
         c.setFillColorRGB(0, 0, 0)
         c.drawString(x_inicial_limite + w_ini + w_val, y_limite, txt_limite_fim)
 
-    # 6. VALIDADE EM DUAS LINHAS E OBSERVACAO / RODAPE
     validade_info = interpretar_intervalo_validade(
         dados.get("validade", ""),
         dados.get("data_inicio", ""),
@@ -1042,7 +1038,7 @@ def login():
     erro = None
     if request.method == "POST":
         if not auth_configurada():
-            erro = "Configure CARTAZ_LOGIN, CARTAZ_PASSWORD e CARTAZ_SECRET_KEY nas variaveis de ambiente."
+            erro = "Configure CARTAZ_LOGIN e CARTAZ_PASSWORD nas variaveis de ambiente."
         else:
             usuario = (request.form.get("usuario") or "").strip()
             senha = request.form.get("senha") or ""
