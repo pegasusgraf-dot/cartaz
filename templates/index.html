@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Cartazes Web</title>
+    <style>
+        :root {
+            --bg-page: #f2f4f7;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border-color: #d1d5db;
+            --primary: #0d6efd;
+            --primary-hover: #0b5ed7;
+            --teal: #14919b;
+            --teal-hover: #0f767e;
+            --green: #198754;
+            --green-hover: #157347;
+            --amber: #d97706;
+            --amber-hover: #b45309;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 24px 18px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1160px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 22px;
+            align-items: stretch;
+        }
+
+        @media (min-width: 860px) {
+            body {
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            .container {
+                height: calc(100vh - 48px);
+                grid-template-columns: minmax(360px, 460px) minmax(0, 1fr);
+            }
+        }
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        @media (min-width: 860px) {
+            .left-column {
+                overflow-y: auto;
+                padding-right: 6px;
+            }
+
+            .left-column::-webkit-scrollbar {
+                width: 8px;
+            }
+
+            .left-column::-webkit-scrollbar-track {
+                background: #e5e7eb;
+                border-radius: 999px;
+            }
+
+            .left-column::-webkit-scrollbar-thumb {
+                background: #9ca3af;
+                border-radius: 999px;
+            }
+
+            .left-column::-webkit-scrollbar-thumb:hover {
+                background: #6b7280;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 22px 20px;
+            box-shadow: var(--shadow);
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-card {
+            padding: 14px 18px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-img {
+            display: block;
+            max-width: 100%;
+            max-height: 68px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .preview-card {
+            height: 100%;
+            min-height: 0;
+        }
+
+        .card-title {
+            text-align: center;
+            font-size: 19px;
+            font-weight: 700;
+            color: #222222;
+            margin-bottom: 16px;
+        }
+
+        .card-body-flex {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #2c2c2c;
+            margin-bottom: 5px;
+        }
+
+        .file-box,
+        .text-input {
+            width: 100%;
+            max-width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #ffffff;
+            color: var(--text-main);
+            font-size: 14px;
+        }
+
+        .file-box {
+            padding: 7px 10px;
+        }
+
+        .file-box input[type="file"] {
+            width: 100%;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .text-input {
+            padding: 9px 11px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .text-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.14);
+        }
+
+        .btn-destaque-amarelo {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 2px solid #eab308;
+            background-color: #fefce8;
+            color: #713f12;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+            margin-bottom: 14px;
+        }
+
+        .btn-destaque-amarelo:hover {
+            background-color: #fef08a;
+        }
+
+        .btn-destaque-amarelo.ativo {
+            background-color: #facc15;
+            border-color: #ca8a04;
+            color: #111827;
+            box-shadow: 0 2px 8px rgba(202, 138, 4, 0.28);
+        }
+
+        .badge-estado {
+            padding: 3px 9px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            background-color: #e5e7eb;
+            color: #374151;
+            text-transform: uppercase;
+        }
+
+        .btn-destaque-amarelo.ativo .badge-estado {
+            background-color: #b91c1c;
+            color: #ffffff;
+        }
+
+        .galeria-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            margin-top: 2px;
+            margin-bottom: 6px;
+        }
+
+        .galeria-titulo {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .btn-atualizar-pasta {
+            background: #eef2ff;
+            color: #1e3a8a;
+            border: 1px solid #c7d2fe;
+            border-radius: 5px;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-atualizar-pasta:hover {
+            background: #e0e7ff;
+        }
+
+        .galeria-fundos {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 8px;
+            max-height: 196px;
+            overflow-y: auto;
+            padding: 6px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #f9fafb;
+        }
+
+        .fundo-item {
+            border: 2px solid transparent;
+            border-radius: 6px;
+            background: #ffffff;
+            padding: 4px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: border-color 0.15s ease, transform 0.1s ease;
+        }
+
+        .fundo-item:hover {
+            border-color: #93c5fd;
+            transform: translateY(-1px);
+        }
+
+        .fundo-item.selecionado {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.2);
+        }
+
+        .fundo-item img {
+            width: 100%;
+            height: 52px;
+            object-fit: cover;
+            border-radius: 4px;
+            display: block;
+        }
+
+        .fundo-item span {
+            font-size: 10px;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
+        .galeria-vazia {
+            grid-column: 1 / -1;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 12px 6px;
+        }
+
+        .divider {
+            border: 0;
+            border-top: 1px solid #e5e7eb;
+            margin: 16px 0;
+        }
+
+        .btn {
+            width: 100%;
+            border: none;
+            border-radius: 6px;
+            padding: 11px 14px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.08s ease;
+            margin-bottom: 10px;
+        }
+
+        .btn:last-child {
+            margin-bottom: 0;
+        }
+
+        .btn:active {
+            transform: scale(0.99);
+        }
+
+        .btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .btn-primary { background-color: var(--primary); }
+        .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover); }
+
+        .btn-teal { background-color: var(--teal); }
+        .btn-teal:hover:not(:disabled) { background-color: var(--teal-hover); }
+
+        .btn-green { background-color: var(--green); }
+        .btn-green:hover:not(:disabled) { background-color: var(--green-hover); }
+
+        .btn-amber { background-color: var(--amber); }
+        .btn-amber:hover:not(:disabled) { background-color: var(--amber-hover); }
+
+        .status-msg {
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--text-muted);
+            min-height: 22px;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .preview-stage {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            min-height: 360px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cartaz-frame {
+            position: relative;
+            background-color: #ffffff;
+            border: 1.5px dashed #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .cartaz-server-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center;
+            background-color: #ffffff;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .helper-text {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .credit-bottom-right {
+            position: fixed;
+            right: 18px;
+            bottom: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+            pointer-events: none;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+
+    <main class="container">
+        <div class="left-column">
+            <!-- LOGO ACIMA DE CONFIGURAÇÃO DO CARTAZ -->
+            <div class="card logo-card">
+                <img
+                    src="/fundos/logo_pontonovo.png"
+                    alt="Logo Ponto Novo"
+                    class="logo-img"
+                    onerror="this.parentElement.style.display='none';"
+                >
+            </div>
+
+            <!-- 1. FORMATO DA FOLHA E 2. IMAGEM DE FUNDO -->
+            <section class="card">
+                <h1 class="card-title">Configuração do Cartaz</h1>
+
+                <div class="card-body-flex">
+                    <div class="form-group">
+                        <label for="formatoCartaz">1. Formato da Folha:</label>
+                        <select id="formatoCartaz" name="formato" class="text-input" onchange="aplicarFormatoPrevia()">
+                            <option value="vertical" selected>Vertical (A4 Retrato)</option>
+                            <option value="horizontal">Horizontal (A4 Paisagem)</option>
+                            <option value="vertical_dobra">A4 Retrato com Dobra (4 cm topo)</option>
+                            <option value="horizontal_dobra">A4 Paisagem com Dobra (4 cm topo)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="galeria-header">
+                            <label for="galeriaFundos" style="margin-bottom: 0;">2. Imagem de Fundo (<code>fundos_prontos</code>):</label>
+                            <button type="button" class="btn-atualizar-pasta" onclick="carregarFundosDaPasta()">Atualizar pasta</button>
+                        </div>
+                        <div id="galeriaFundos" class="galeria-fundos">
+                            <div class="galeria-vazia">Carregando imagens...</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. FAZER CARTAZ NA HORA -->
+            <section class="card">
+                <h2 class="card-title">3. Fazer Cartaz na Hora</h2>
+
+                <div class="card-body-flex">
+                    <div class="form-group">
+                        <label for="novoProduto">Nome do Produto:</label>
+                        <input type="text" id="novoProduto" class="text-input" placeholder="Digite o produto na hora" oninput="agendarPreviaAoVivo()">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="novoCampoExtra">Campo Extra (opcional):</label>
+                            <input type="text" id="novoCampoExtra" class="text-input" placeholder="Ex: 2 UNIDADES" oninput="agendarPreviaAoVivo()">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="novoObsExtra">Obs. do Campo Extra (opcional):</label>
+                            <input type="text" id="novoObsExtra" class="text-input" placeholder="Ex: na mesma compra" oninput="agendarPreviaAoVivo()">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="novoPrecoDe">Preço "De" (opcional):</label>
+                            <input type="text" id="novoPrecoDe" class="text-input" placeholder="Ex: 22,99" oninput="agendarPreviaAoVivo()">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="novoPrecoPor">Preço "Por" (R$):</label>
+                            <input type="text" id="novoPrecoPor" class="text-input" placeholder="Ex: 19,99" oninput="agendarPreviaAoVivo()">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="novoLimite">Limite por Cliente:</label>
+                            <input type="text" id="novoLimite" class="text-input" placeholder="Ex: 5" oninput="agendarPreviaAoVivo()">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="novoValidade">Validade (Data ou Início : Fim):</label>
+                            <input type="text" id="novoValidade" class="text-input" placeholder="Ex: 25/11/2026 : 30/11/2026" oninput="agendarPreviaAoVivo()">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="novoObservacao">Rodapé / Observação:</label>
+                        <input type="text" id="novoObservacao" class="text-input" placeholder="Ex: ou até enquanto durar o estoque" oninput="agendarPreviaAoVivo()">
+                    </div>
+
+                    <button type="button" id="btnFundoAmareloAvulso" class="btn-destaque-amarelo" aria-pressed="false" onclick="alternarFundoAmarelo()">
+                        <span>Fundo Amarelo no Valor (Paralelogramo)</span>
+                        <span id="badgeFundoAmareloAvulso" class="badge-estado">Desativado</span>
+                    </button>
+
+                    <button type="button" id="btnAplicarNaHora" class="btn btn-amber" onclick="atualizarPreviaAoVivo()">
+                        Atualizar Prévia do Cartaz Novo
+                    </button>
+
+                    <button type="button" id="btnBaixarCartazNovo" class="btn btn-green" onclick="gerarCartazNovoPdf()">
+                        Baixar Cartaz Novo (.pdf)
+                    </button>
+
+                    <p class="helper-text">
+                        Na Validade, digite uma data final (ex: <code>29/11/2026</code>) ou intervalo com dois pontos (ex: <code>25/11/2026 : 30/11/2026</code>).
+                    </p>
+                </div>
+            </section>
+
+            <!-- 4. PLANILHA EXCEL PARA IMPORTAR -->
+            <section class="card">
+                <h2 class="card-title">4. Planilha Excel para Importar</h2>
+
+                <div class="card-body-flex">
+                    <div class="form-group">
+                        <label for="planilha">Planilha Excel (.xlsx):</label>
+                        <div class="file-box">
+                            <input type="file" id="planilha" name="planilha" accept=".xlsx,.xls">
+                        </div>
+                    </div>
+
+                    <button type="button" id="btnFundoAmarelo" class="btn-destaque-amarelo" aria-pressed="false" onclick="alternarFundoAmarelo()">
+                        <span>Fundo Amarelo no Valor (Paralelogramo)</span>
+                        <span id="badgeFundoAmarelo" class="badge-estado">Desativado</span>
+                    </button>
+
+                    <button type="button" id="btnGerarZip" class="btn btn-primary" onclick="gerarZipTodos()">
+                        Gerar e Baixar Todos (.zip)
+                    </button>
+
+                    <hr class="divider">
+
+                    <div class="form-group">
+                        <label for="codigoProduto">Código do Produto Específico:</label>
+                        <input type="text" id="codigoProduto" name="codigo_produto" class="text-input" placeholder="Ex: 599">
+                    </div>
+
+                    <button type="button" id="btnVerPrevia" class="btn btn-teal" onclick="verPreviaPorCodigo()">
+                        Ver Pré-visualização por Código
+                    </button>
+
+                    <button type="button" id="btnGerarProduto" class="btn btn-green" onclick="gerarProdutoPdf()">
+                        Gerar Apenas Este Produto (.pdf)
+                    </button>
+
+                    <div id="statusMsg" class="status-msg"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- PRÉ-VISUALIZAÇÃO SEMPRE VISÍVEL À DIREITA -->
+        <section class="card preview-card">
+            <h2 class="card-title">Pré-visualização</h2>
+
+            <div class="card-body-flex">
+                <div id="previewStage" class="preview-stage">
+                    <div id="cartazFrame" class="cartaz-frame">
+                        <img id="prevServerImg" class="cartaz-server-img" alt="Prévia do cartaz" style="display: none;">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="credit-bottom-right">Desenvolvido por: SyncStore Paulo Rodrigo</footer>
+
+    <script>
+        const formatoCartaz = document.getElementById("formatoCartaz");
+        const previewStage = document.getElementById("previewStage");
+        const cartazFrame = document.getElementById("cartazFrame");
+        const planilhaInput = document.getElementById("planilha");
+        const prevServerImg = document.getElementById("prevServerImg");
+        const statusMsg = document.getElementById("statusMsg");
+        const galeriaFundos = document.getElementById("galeriaFundos");
+
+        const novoProduto = document.getElementById("novoProduto");
+        const novoCampoExtra = document.getElementById("novoCampoExtra");
+        const novoObsExtra = document.getElementById("novoObsExtra");
+        const novoPrecoDe = document.getElementById("novoPrecoDe");
+        const novoPrecoPor = document.getElementById("novoPrecoPor");
+        const novoLimite = document.getElementById("novoLimite");
+        const novoValidade = document.getElementById("novoValidade");
+        const novoObservacao = document.getElementById("novoObservacao");
+
+        let fundoAmareloAtivo = false;
+        let fundoSelecionadoPasta = "";
+        let timerPrevia = null;
+        let controllerPrevia = null;
+
+        function setStatus(texto, isErro = false) {
+            statusMsg.textContent = texto;
+            statusMsg.style.color = isErro ? "#dc2626" : "#6b7280";
+        }
+
+        function limparMensagemErro(texto) {
+            const raw = String(texto || "").trim();
+            if (!raw) return "";
+            if (raw.includes("<!doctype") || raw.includes("<html")) {
+                return "Rota não encontrada. Reinicie o servidor app.py.";
+            }
+            return raw;
+        }
+
+        function slugify(texto) {
+            return String(texto || "")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]+/g, "_")
+                .replace(/^_|_$/g, "") || "cartaz";
+        }
+
+        function obterNomeArquivoHeader(resp, fallback) {
+            const disposition = resp.headers.get("Content-Disposition") || "";
+            const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+            return match && match[1] ? decodeURIComponent(match[1]) : fallback;
+        }
+
+        function gerarTimestampArquivo() {
+            const agora = new Date();
+            const pad = (n) => String(n).padStart(2, "0");
+            return `${agora.getFullYear()}-${pad(agora.getMonth() + 1)}-${pad(agora.getDate())}_${pad(agora.getHours())}-${pad(agora.getMinutes())}-${pad(agora.getSeconds())}`;
+        }
+
+        function sincronizarBotaoFundoAmarelo() {
+            const botoes = [
+                document.getElementById("btnFundoAmarelo"),
+                document.getElementById("btnFundoAmareloAvulso"),
+            ];
+            const badges = [
+                document.getElementById("badgeFundoAmarelo"),
+                document.getElementById("badgeFundoAmareloAvulso"),
+            ];
+
+            botoes.forEach((btn) => {
+                if (!btn) return;
+                btn.classList.toggle("ativo", fundoAmareloAtivo);
+                btn.setAttribute("aria-pressed", fundoAmareloAtivo ? "true" : "false");
+            });
+
+            badges.forEach((badge) => {
+                if (!badge) return;
+                badge.textContent = fundoAmareloAtivo ? "Ativado" : "Desativado";
+            });
+        }
+
+        function alternarFundoAmarelo() {
+            fundoAmareloAtivo = !fundoAmareloAtivo;
+            sincronizarBotaoFundoAmarelo();
+
+            const codigo = document.getElementById("codigoProduto").value.trim();
+            const planilha = planilhaInput.files[0];
+
+            if (planilha && fundoSelecionadoPasta && codigo) {
+                verPreviaPorCodigo();
+            } else {
+                atualizarPreviaAoVivo();
+            }
+        }
+
+        function selecionarFundoDaPasta(nomeArquivo, urlImagem, elementoCard) {
+            fundoSelecionadoPasta = nomeArquivo;
+
+            document.querySelectorAll(".fundo-item.selecionado").forEach((el) => {
+                el.classList.remove("selecionado");
+            });
+            if (elementoCard) {
+                elementoCard.classList.add("selecionado");
+            }
+
+            setStatus(`Fundo selecionado da pasta: ${nomeArquivo}`);
+            atualizarPreviaAoVivo();
+        }
+
+        async function carregarFundosDaPasta() {
+            try {
+                const resp = await fetch("/api/fundos?_=" + Date.now());
+                if (!resp.ok) throw new Error("Falha ao listar pasta de fundos");
+                const data = await resp.json();
+                const fundos = Array.isArray(data.fundos) ? data.fundos : [];
+
+                galeriaFundos.innerHTML = "";
+                if (fundos.length === 0) {
+                    galeriaFundos.innerHTML = '<div class="galeria-vazia">Coloque imagens em <strong>fundos_prontos/</strong> e clique em Atualizar pasta.</div>';
+                    return;
+                }
+
+                fundos.forEach((item) => {
+                    const card = document.createElement("button");
+                    card.type = "button";
+                    card.className = "fundo-item" + (item.nome === fundoSelecionadoPasta ? " selecionado" : "");
+                    card.title = item.nome;
+
+                    const img = document.createElement("img");
+                    img.src = item.url + "?t=" + Date.now();
+                    img.alt = item.nome;
+
+                    const legenda = document.createElement("span");
+                    legenda.textContent = item.nome;
+
+                    card.appendChild(img);
+                    card.appendChild(legenda);
+                    card.addEventListener("click", () => selecionarFundoDaPasta(item.nome, item.url, card));
+                    galeriaFundos.appendChild(card);
+                });
+            } catch (err) {
+                galeriaFundos.innerHTML = `<div class="galeria-vazia">Erro ao carregar pasta: ${err.message}</div>`;
+            }
+        }
+
+        function ocultarPreviaServidor() {
+            if (prevServerImg.src && prevServerImg.src.startsWith("blob:")) {
+                window.URL.revokeObjectURL(prevServerImg.src);
+            }
+            prevServerImg.removeAttribute("src");
+            prevServerImg.style.display = "none";
+        }
+
+        function ajustarDimensoesMoldura() {
+            const fmt = formatoCartaz.value;
+            const ehHorizontal = fmt === "horizontal" || fmt === "horizontal_dobra";
+            const ratio = ehHorizontal ? (1754 / 1240) : (1240 / 1754);
+
+            const stageW = previewStage.clientWidth;
+            const stageH = previewStage.clientHeight;
+            if (!stageW || !stageH) return;
+
+            let frameW = stageW;
+            let frameH = frameW / ratio;
+
+            if (frameH > stageH) {
+                frameH = stageH;
+                frameW = frameH * ratio;
+            }
+
+            cartazFrame.style.width = `${Math.floor(frameW)}px`;
+            cartazFrame.style.height = `${Math.floor(frameH)}px`;
+        }
+
+        function aplicarFormatoPrevia() {
+            ajustarDimensoesMoldura();
+            atualizarPreviaAoVivo();
+        }
+
+        window.addEventListener("resize", ajustarDimensoesMoldura);
+
+        function agendarPreviaAoVivo() {
+            clearTimeout(timerPrevia);
+            timerPrevia = setTimeout(() => {
+                atualizarPreviaAoVivo();
+            }, 250);
+        }
+
+        async function atualizarPreviaAoVivo() {
+            clearTimeout(timerPrevia);
+            if (controllerPrevia) {
+                controllerPrevia.abort();
+            }
+            controllerPrevia = new AbortController();
+
+            const btn = document.getElementById("btnAplicarNaHora");
+            if (btn) btn.disabled = true;
+
+            const nomeDigitado = novoProduto.value;
+            const formData = criarFormDataBase({
+                descricao_produtos: nomeDigitado.trim() ? nomeDigitado : "PRODUTO EM OFERTA",
+                campo_extra: novoCampoExtra.value.trim(),
+                observacao_extra: novoObsExtra.value.trim(),
+                preco_normal: novoPrecoDe.value.trim(),
+                preco_oferta: novoPrecoPor.value.trim() || "0",
+                limite_por_cliente: novoLimite.value.trim(),
+                validade: novoValidade.value.trim(),
+                data_inicio: "",
+                data_termino: "",
+                observacao: novoObservacao.value.trim() || "ou até enquanto durar o estoque"
+            });
+
+            try {
+                const resp = await fetch("/preview_avulso", {
+                    method: "POST",
+                    body: formData,
+                    signal: controllerPrevia.signal
+                });
+
+                if (!resp.ok) {
+                    throw new Error(limparMensagemErro(await resp.text()) || "Erro ao renderizar prévia.");
+                }
+
+                const blob = await resp.blob();
+                ocultarPreviaServidor();
+                prevServerImg.src = window.URL.createObjectURL(blob);
+                prevServerImg.style.display = "block";
+                ajustarDimensoesMoldura();
+                setStatus("Prévia sincronizada com o PDF.");
+            } catch (err) {
+                if (err.name === "AbortError") return;
+                setStatus(`Erro na prévia: ${err.message}`, true);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function criarFormDataBase(extras = {}) {
+            const formData = new FormData();
+            const planilha = planilhaInput.files[0];
+            const codigo = document.getElementById("codigoProduto").value.trim();
+
+            formData.append("formato", formatoCartaz.value);
+            formData.append("fundo_paralelogramo", fundoAmareloAtivo ? "1" : "0");
+            if (planilha) formData.append("planilha", planilha);
+            if (fundoSelecionadoPasta) {
+                formData.append("fundo_preset", fundoSelecionadoPasta);
+            }
+            if (codigo) formData.append("codigo_produto", codigo);
+
+            Object.entries(extras).forEach(([chave, valor]) => {
+                if (valor !== undefined && valor !== null) {
+                    formData.append(chave, valor);
+                }
+            });
+
+            return formData;
+        }
+
+        function baixarBlob(blob, nomeArquivo) {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = nomeArquivo;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        }
+
+        async function enviarRequisicaoArquivo(rota, formData, nomeArquivoPadrao, botao) {
+            if (botao) botao.disabled = true;
+            setStatus(`Processando ${nomeArquivoPadrao}...`);
+
+            try {
+                const resp = await fetch(rota, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!resp.ok) {
+                    const erroTexto = await resp.text();
+                    throw new Error(limparMensagemErro(erroTexto) || `Erro HTTP ${resp.status}`);
+                }
+
+                const nomeFinal = obterNomeArquivoHeader(resp, nomeArquivoPadrao);
+                const blob = await resp.blob();
+                baixarBlob(blob, nomeFinal);
+                setStatus(`Arquivo gerado: ${nomeFinal}`);
+            } catch (err) {
+                setStatus(`Erro: ${err.message}`, true);
+            } finally {
+                if (botao) botao.disabled = false;
+            }
+        }
+
+        function gerarZipTodos() {
+            const planilha = planilhaInput.files[0];
+            if (!planilha || !fundoSelecionadoPasta) {
+                setStatus("Selecione uma imagem de fundo na pasta e a planilha (.xlsx).", true);
+                return;
+            }
+            const nomeZipFallback = `cartaz_${gerarTimestampArquivo()}.zip`;
+            enviarRequisicaoArquivo("/gerar", criarFormDataBase(), nomeZipFallback, document.getElementById("btnGerarZip"));
+        }
+
+        function gerarProdutoPdf() {
+            const planilha = planilhaInput.files[0];
+            const codigo = document.getElementById("codigoProduto").value.trim();
+
+            if (!planilha || !fundoSelecionadoPasta) {
+                setStatus("Selecione uma imagem de fundo na pasta e a planilha (.xlsx).", true);
+                return;
+            }
+            if (!codigo) {
+                setStatus("Informe o código do produto.", true);
+                return;
+            }
+
+            enviarRequisicaoArquivo(
+                "/gerar_unico",
+                criarFormDataBase({ codigo_produto: codigo }),
+                `cartaz_${codigo}.pdf`,
+                document.getElementById("btnGerarProduto")
+            );
+        }
+
+        function gerarCartazNovoPdf() {
+            const nomeProd = novoProduto.value;
+            const precoPorVal = novoPrecoPor.value.trim();
+
+            if (!nomeProd.trim() || !precoPorVal) {
+                setStatus("Preencha pelo menos o Nome do Produto e o Preço 'Por' para gerar o cartaz na hora.", true);
+                return;
+            }
+
+            const formData = criarFormDataBase({
+                descricao_produtos: nomeProd,
+                campo_extra: novoCampoExtra.value.trim(),
+                observacao_extra: novoObsExtra.value.trim(),
+                preco_normal: novoPrecoDe.value.trim(),
+                preco_oferta: precoPorVal,
+                limite_por_cliente: novoLimite.value.trim(),
+                validade: novoValidade.value.trim(),
+                data_inicio: "",
+                data_termino: "",
+                observacao: novoObservacao.value.trim() || "ou até enquanto durar o estoque"
+            });
+
+            enviarRequisicaoArquivo(
+                "/gerar_avulso",
+                formData,
+                `cartaz_${slugify(nomeProd)}.pdf`,
+                document.getElementById("btnBaixarCartazNovo")
+            );
+        }
+
+        async function verPreviaPorCodigo() {
+            const codigo = document.getElementById("codigoProduto").value.trim();
+            const planilha = planilhaInput.files[0];
+
+            if (!planilha || !fundoSelecionadoPasta || !codigo) {
+                atualizarPreviaAoVivo();
+                setStatus("Mostrando prévia dos campos digitados na hora.");
+                return;
+            }
+
+            const btn = document.getElementById("btnVerPrevia");
+            btn.disabled = true;
+            setStatus(`Gerando prévia do código ${codigo}...`);
+
+            try {
+                const resp = await fetch("/preview", {
+                    method: "POST",
+                    body: criarFormDataBase({ codigo_produto: codigo })
+                });
+
+                if (!resp.ok) {
+                    throw new Error(limparMensagemErro(await resp.text()) || "Produto não encontrado.");
+                }
+
+                const blob = await resp.blob();
+                ocultarPreviaServidor();
+                prevServerImg.src = window.URL.createObjectURL(blob);
+                prevServerImg.style.display = "block";
+                ajustarDimensoesMoldura();
+                setStatus(`Prévia carregada para o código ${codigo}.`);
+            } catch (err) {
+                setStatus(`Erro na prévia: ${err.message}`, true);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        sincronizarBotaoFundoAmarelo();
+        carregarFundosDaPasta();
+        aplicarFormatoPrevia();
+    </script>
+</body>
+</html>
