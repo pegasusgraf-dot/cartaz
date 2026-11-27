@@ -388,6 +388,23 @@ def interpretar_intervalo_validade(validade_bruta, data_inicio_bruta="", data_te
     }
 
 
+def obter_unidade_medida(dados):
+    chaves_possiveis = ["unidade_medida", "unidade de medida", "unidade", "unid", "un", "um"]
+    if hasattr(dados, "index"):
+        for col in dados.index:
+            col_limpa = re.sub(r"\s+", " ", str(col).strip().lower())
+            if col_limpa in chaves_possiveis:
+                val = dados.get(col, "")
+                if pd.notna(val) and str(val).strip() != "" and str(val).strip().lower() != "nan":
+                    return str(val).strip().upper()
+    elif isinstance(dados, dict):
+        for chave in chaves_possiveis:
+            val = dados.get(chave, "")
+            if pd.notna(val) and str(val).strip() != "" and str(val).strip().lower() != "nan":
+                return str(val).strip().upper()
+    return ""
+
+
 def obter_campo_importa(dados):
     chaves_possiveis = ["importa", "importado", "origem", "procedencia", "procedência"]
     if hasattr(dados, "index"):
@@ -612,6 +629,8 @@ def calcular_geometria_preco_oferta(
     fonte,
     tamanho_inteiro,
     fundo_paralelogramo=False,
+    unidade_medida="",
+    fonte_unidade="Helvetica",
 ):
     if "," in preco_str:
         partes = preco_str.split(",")
@@ -650,14 +669,34 @@ def calcular_geometria_preco_oferta(
     inclinacao = max(18.0, tamanho_inteiro * 0.20)
     raio = max(16.0, min(46.0, tamanho_inteiro * 0.24))
 
+    unidade_limpa = str(unidade_medida or "").strip().upper()
+    tem_unidade = bool(unidade_limpa)
+    tamanho_unidade = max(14, int(tamanho_inteiro * 0.19))
+    espaco_unidade = max(6.0, tamanho_inteiro * 0.05)
+
+    # Mantem unidade_medida sempre na mesma posicao em relacao aos centavos,
+    # independentemente de o fundo paralelogramo amarelo estar ativo ou nao.
+    x_centro_centavos = (
+        x_inicial
+        + largura_simbolo
+        + espaco
+        + largura_inteiro
+        + (largura_centavos / 2.0)
+    )
+    x_centro_preco = x_inicial + (largura_total_preco / 2.0)
+    x_unidade = x_centro_centavos if largura_centavos >= tamanho_unidade else x_centro_preco
+    y_unidade = y_centavos - espaco_unidade - (tamanho_unidade * 0.85) if tem_unidade else y_base_total
+
     if fundo_paralelogramo:
         y_baixo_fundo = y_base_total - pad_y
         altura_fundo = (y_topo_total - y_base_total) + (pad_y * 2.0)
         y_topo_fundo = y_baixo_fundo + altura_fundo
+        y_base_bloco = min(y_baixo_fundo, y_unidade - (tamanho_unidade * 0.15)) if tem_unidade else y_baixo_fundo
     else:
         y_baixo_fundo = y_base_total
         altura_fundo = y_topo_total - y_base_total
         y_topo_fundo = y_topo_total
+        y_base_bloco = min(y_base_total, y_unidade - (tamanho_unidade * 0.15)) if tem_unidade else y_base_total
 
     return {
         "simbolo": simbolo,
@@ -672,6 +711,13 @@ def calcular_geometria_preco_oferta(
         "x_inicial": x_inicial,
         "y_simbolo": y_simbolo,
         "y_centavos": y_centavos,
+        "unidade_medida": unidade_limpa,
+        "tem_unidade": tem_unidade,
+        "tamanho_unidade": tamanho_unidade,
+        "fonte_unidade": fonte_unidade,
+        "x_unidade": x_unidade,
+        "y_unidade": y_unidade,
+        "y_base_bloco": y_base_bloco,
         "x_esq_fundo": x_inicial - pad_x - (inclinacao * 0.35),
         "y_baixo_fundo": y_baixo_fundo,
         "largura_fundo": largura_total_preco + (pad_x * 2.0),
@@ -693,6 +739,9 @@ def desenhar_preco_oferta_fracionado(
     cor=(255, 0, 0),
     fundo_paralelogramo=False,
     geom=None,
+    unidade_medida="",
+    fonte_unidade="Helvetica",
+    cor_unidade=(0, 0, 0),
 ):
     if geom is None:
         geom = calcular_geometria_preco_oferta(
@@ -704,6 +753,8 @@ def desenhar_preco_oferta_fracionado(
             fonte,
             tamanho_inteiro,
             fundo_paralelogramo=fundo_paralelogramo,
+            unidade_medida=unidade_medida,
+            fonte_unidade=fonte_unidade,
         )
 
     if fundo_paralelogramo:
@@ -729,6 +780,11 @@ def desenhar_preco_oferta_fracionado(
         geom["y_centavos"],
         geom["centavos"],
     )
+
+    if geom["tem_unidade"]:
+        c.setFont(geom["fonte_unidade"], geom["tamanho_unidade"])
+        c.setFillColorRGB(cor_unidade[0] / 255, cor_unidade[1] / 255, cor_unidade[2] / 255)
+        c.drawCentredString(geom["x_unidade"], geom["y_unidade"], geom["unidade_medida"])
 
 
 def criar_cartaz_pdf(
@@ -888,6 +944,8 @@ def criar_cartaz_pdf(
     limite_cliente = dados.get("limite_por_cliente", "")
     tem_limite = pd.notna(limite_cliente) and str(limite_cliente).strip() != "" and str(limite_cliente).strip().lower() != "nan"
 
+    unidade_medida = obter_unidade_medida(dados)
+
     p_normal = dados.get("preco_normal", "")
     p_oferta_bruto = dados.get("preco_oferta", "0")
     p_oferta = formatar_preco(p_oferta_bruto)
@@ -897,9 +955,9 @@ def criar_cartaz_pdf(
 
     tamanho_fonte_preco = int(altura * (0.255 if eh_horizontal else 0.180))
     if eh_horizontal:
-        y_pos_preco = int(altura * 0.135) if tem_limite else int(altura * 0.095)
+        y_pos_preco = int(altura * 0.145) if tem_limite else int(altura * 0.105)
     else:
-        y_pos_preco = (y_limite + int(altura * 0.088)) if tem_limite else int(altura * 0.182)
+        y_pos_preco = (y_limite + int(altura * 0.098)) if tem_limite else int(altura * 0.192)
 
     tamanho_fonte_por_apenas = int(altura * (0.026 if eh_horizontal else 0.023))
     tamanho_fonte_normal = int(altura * (0.044 if eh_horizontal else 0.042))
@@ -916,6 +974,8 @@ def criar_cartaz_pdf(
             f_preco_oferta,
             tam_preco_cand,
             fundo_paralelogramo=fundo_paralelogramo,
+            unidade_medida=unidade_medida,
+            fonte_unidade=f_detalhes,
         )
         base_referencia_topo = geom_cand["y_topo_fundo"] if fundo_paralelogramo else (y_pos_preco + int(tam_preco_cand * 0.88))
         y_por_cand = base_referencia_topo + folga_amarelo_por_apenas if mostrar_por_apenas else base_referencia_topo
@@ -978,6 +1038,9 @@ def criar_cartaz_pdf(
         (255, 0, 0),
         fundo_paralelogramo=fundo_paralelogramo,
         geom=geom_preco,
+        unidade_medida=unidade_medida,
+        fonte_unidade=f_detalhes,
+        cor_unidade=(0, 0, 0),
     )
 
     if tem_limite:
@@ -1207,6 +1270,12 @@ def preview_avulso():
             "importa": (form.get("importa") or form.get("importado") or form.get("origem") or "").strip(),
             "preco_normal": (form.get("preco_normal") or form.get("preco_de") or "").strip(),
             "preco_oferta": preco_oferta,
+            "unidade_medida": (
+                form.get("unidade_medida")
+                or form.get("unidade")
+                or form.get("un")
+                or ""
+            ).strip(),
             "limite_por_cliente": (form.get("limite_por_cliente") or "").strip(),
             "validade": validade_val,
             "data_inicio": data_inicio_val,
@@ -1450,6 +1519,12 @@ def gerar_avulso():
             "importa": (form.get("importa") or form.get("importado") or form.get("origem") or "").strip(),
             "preco_normal": (form.get("preco_normal") or form.get("preco_de") or "").strip(),
             "preco_oferta": preco_oferta,
+            "unidade_medida": (
+                form.get("unidade_medida")
+                or form.get("unidade")
+                or form.get("un")
+                or ""
+            ).strip(),
             "limite_por_cliente": (form.get("limite_por_cliente") or "").strip(),
             "validade": validade_val,
             "data_inicio": data_inicio_val,
