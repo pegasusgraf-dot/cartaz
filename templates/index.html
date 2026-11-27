@@ -116,8 +116,8 @@
 
       <div class="caixa-forma">
         <div class="campo" style="margin-bottom:8px;">
-          <label for="forma_abaixo_valor">Forma Geométrica Abaixo do Valor</label>
-          <select id="forma_abaixo_valor">
+          <label for="forma_valor">Forma Geométrica no Escrito do Valor</label>
+          <select id="forma_valor">
             <option value="nenhuma">Nenhuma</option>
             <option value="paralelogramo">Paralelogramo</option>
             <option value="retangulo">Retângulo</option>
@@ -129,7 +129,7 @@
           </select>
         </div>
 
-        <label for="cor_forma_picker">Planilha de Cores da Forma</label>
+        <label for="cor_forma_picker">Planilha de Cores do Destaque do Valor</label>
         <div class="linha-cor">
           <input id="cor_forma_picker" type="color" value="#FFD700" title="Escolher cor personalizada" />
           <input id="cor_forma_hex" type="text" value="#FFD700" maxlength="9" placeholder="#FFD700" />
@@ -322,12 +322,12 @@
 
     function montarFormDataBase() {
       const fd = new FormData();
-      const forma = document.getElementById("forma_abaixo_valor").value;
+      const forma = document.getElementById("forma_valor").value;
       const corHex = (document.getElementById("cor_forma_hex").value || "#FFD700").trim();
       fd.append("formato", document.getElementById("formato").value);
       fd.append("fundo_preset", document.getElementById("fundo_preset").value);
-      fd.append("forma_abaixo_valor", forma);
-      fd.append("cor_forma_abaixo", corHex);
+      fd.append("forma_valor", forma);
+      fd.append("cor_forma_valor", corHex);
       fd.append("fundo_paralelogramo", forma === "paralelogramo" ? "true" : "false");
       const fFile = document.getElementById("fundo_file").files[0];
       if (fFile) fd.append("fundo", fFile);
@@ -500,7 +500,7 @@
       }
     });
 
-    ["formato", "fundo_preset", "fundo_file", "forma_abaixo_valor"].forEach((id) => {
+    ["formato", "fundo_preset", "fundo_file", "forma_valor"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) {
         el.addEventListener("change", notificarMudancaEstilo);
