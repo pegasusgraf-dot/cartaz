@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login - Gerador de Cartazes</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
     * {
       box-sizing: border-box;
@@ -13,141 +13,346 @@
     }
 
     body {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
       min-height: 100vh;
-      background-color: #1a1a2e;
-      color: #ffffff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #ffffff;
+      color: #0f172a;
+      overflow-x: hidden;
     }
 
-    .login-main-wrapper {
+    /* Painel Esquerdo */
+    .painel-esquerdo {
+      position: relative;
+      background: #144d34;
+      color: #ffffff;
+      padding: 40px 56px 36px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      width: 100%;
-      max-width: 400px;
+      justify-content: space-between;
+      overflow: hidden;
     }
 
-    .welcome-header {
-      text-align: center;
+    .arcos-decorativos {
+      position: absolute;
+      right: -190px;
+      bottom: -210px;
+      width: 560px;
+      height: 560px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .arcos-decorativos span {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .arcos-decorativos span:nth-child(2) {
+      inset: 58px;
+    }
+
+    .arcos-decorativos span:nth-child(3) {
+      inset: 116px;
+    }
+
+    .topo-marca-esq {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .badge-esq {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      background: #e2725b;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.92rem;
+      display: grid;
+      place-items: center;
+    }
+
+    .nome-marca-esq {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .nome-marca-esq span {
+      color: #6ee7b7;
+    }
+
+    .conteudo-hero {
+      position: relative;
+      z-index: 1;
+      max-width: 440px;
+      margin: auto 0;
+      padding: 24px 0;
+    }
+
+    .kicker-hero {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #86efac;
+      margin-bottom: 18px;
+    }
+
+    .titulo-hero {
+      font-size: clamp(2.4rem, 3.6vw, 3.55rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      color: #ffffff;
       margin-bottom: 24px;
     }
 
-    .welcome-header h1 {
-      font-size: 2rem;
-      margin: 0 0 8px 0;
+    .titulo-hero .destaque-verde {
+      color: #6ee7b7;
+    }
+
+    .descricao-hero {
+      font-size: 0.96rem;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.78);
+      max-width: 360px;
+    }
+
+    .rodape-esq {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .ponto-status {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #4ade80;
+    }
+
+    /* Painel Direito */
+    .painel-direito {
+      background: #ffffff;
+      padding: 40px 32px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 370px;
+      margin: auto 0;
+      padding: 24px 0;
+    }
+
+    .topo-marca-dir {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 34px;
+    }
+
+    .badge-dir {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: #e2725b;
       color: #ffffff;
       font-weight: 700;
+      font-size: 0.88rem;
+      display: grid;
+      place-items: center;
     }
 
-    .brand-title {
-      font-size: 2.1rem;
-      font-weight: 800;
-      color: #f59e0b;
-      margin: 0 0 6px 0;
-      letter-spacing: 0.4px;
-    }
-
-    .brand-subtitle {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 1.6px;
-      color: #94a3b8;
-      margin: 0;
-      font-weight: 500;
-    }
-
-    .form-container {
-      background: #ffffff;
-      color: #1e293b;
-      padding: 26px;
-      border-radius: 10px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-      width: 100%;
-    }
-
-    .form-container h2 {
-      margin-top: 0;
-      margin-bottom: 14px;
-      color: #1e293b;
-      text-align: center;
-      font-size: 1.25rem;
+    .nome-marca-dir {
+      font-size: 1.05rem;
       font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+    }
+
+    .nome-marca-dir span {
+      color: #15803d;
+    }
+
+    .kicker-login {
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #15803d;
+      margin-bottom: 8px;
+    }
+
+    .titulo-login {
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .subtitulo-login {
+      font-size: 0.88rem;
+      color: #64748b;
+      margin-bottom: 24px;
     }
 
     .campo {
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
-    .form-container label {
-      font-size: 0.88rem;
-      color: #475569;
+    .campo label {
       display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-    }
-
-    .form-container input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      color: #0f172a;
-      background: #f8fafc;
-      outline: none;
-      transition: border-color 0.2s ease, background-color 0.2s ease;
-    }
-
-    .form-container input:focus {
-      border-color: #2563eb;
-      background: #ffffff;
-    }
-
-    .form-container button {
-      margin-top: 6px;
-      cursor: pointer;
-      padding: 11px 14px;
-      background-color: #2563eb;
-      color: #ffffff;
-      border: none;
-      border-radius: 6px;
-      width: 100%;
+      font-size: 0.78rem;
       font-weight: 700;
-      font-size: 0.95rem;
-      transition: background-color 0.2s ease;
+      color: #334155;
+      margin-bottom: 7px;
     }
 
-    .form-container button:hover {
-      background-color: #1d4ed8;
+    .campo input {
+      width: 100%;
+      height: 44px;
+      padding: 0 14px;
+      border-radius: 7px;
+      border: 1px solid #d1d5db;
+      background: #eef2f7;
+      color: #0f172a;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .campo input:focus {
+      background: #ffffff;
+      border-color: #144d34;
+      box-shadow: 0 0 0 3px rgba(20, 77, 52, 0.12);
+    }
+
+    .btn-entrar {
+      width: 100%;
+      height: 44px;
+      margin-top: 6px;
+      border: 0;
+      border-radius: 7px;
+      background: #144d34;
+      color: #ffffff;
+      font-size: 0.88rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background-color 0.18s ease, transform 0.12s ease;
+    }
+
+    .btn-entrar:hover {
+      background: #0f3d29;
+    }
+
+    .btn-entrar:active {
+      transform: scale(0.99);
     }
 
     .erro {
-      background: rgba(239, 68, 68, 0.12);
+      background: rgba(239, 68, 68, 0.1);
       border: 1px solid #ef4444;
       color: #b91c1c;
       padding: 10px 12px;
-      border-radius: 6px;
-      margin-bottom: 14px;
-      font-size: 0.85rem;
-      text-align: center;
+      border-radius: 7px;
+      margin-bottom: 16px;
+      font-size: 0.83rem;
       font-weight: 600;
+    }
+
+    .rodape-dir {
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        grid-template-columns: 1fr;
+      }
+
+      .painel-esquerdo {
+        padding: 28px 24px;
+        min-height: 260px;
+      }
+
+      .conteudo-hero {
+        padding: 16px 0;
+      }
+
+      .painel-direito {
+        padding: 28px 20px 22px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="login-main-wrapper">
-    <div class="welcome-header">
-      <h1>Seja bem-vindo!</h1>
-      <div class="brand-title">Gerador de Cartazes</div>
-      <p class="brand-subtitle">GESTÃO RÁPIDA DE OFERTAS E CARTAZES</p>
+  <section class="painel-esquerdo" aria-label="Apresentação">
+    <div class="arcos-decorativos" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
     </div>
 
-    <div class="form-container">
-      <h2>Entrar no Sistema</h2>
+    <div class="topo-marca-esq">
+      <div class="badge-esq">S</div>
+      <div class="nome-marca-esq">SyncStore<span>.</span></div>
+    </div>
+
+    <div class="conteudo-hero">
+      <div class="kicker-hero">CARTAZES &amp; OFERTAS</div>
+      <h1 class="titulo-hero">
+        O próximo cartaz,
+        <span class="destaque-verde">no ponto certo.</span>
+      </h1>
+      <p class="descricao-hero">
+        Ofertas, formatos e PDFs organizados em um só lugar.
+      </p>
+    </div>
+
+    <div class="rodape-esq">
+      <span class="ponto-status"></span>
+      <span>Geração de cartazes em tempo real</span>
+    </div>
+  </section>
+
+  <main class="painel-direito">
+    <div class="login-box">
+      <div class="topo-marca-dir">
+        <div class="badge-dir">C</div>
+        <div class="nome-marca-dir">cartaz<span>.</span></div>
+      </div>
+
+      <div class="kicker-login">BEM-VINDO DE VOLTA</div>
+      <h2 class="titulo-login">Acesse sua conta</h2>
+      <p class="subtitulo-login">Entre para consultar itens e gerar cartazes.</p>
 
       {% if erro %}
         <div class="erro">{{ erro }}</div>
@@ -155,16 +360,37 @@
 
       <form method="POST" action="/login">
         <div class="campo">
-          <label for="usuario">Usuário:</label>
-          <input id="usuario" name="usuario" type="text" required autocomplete="username" />
+          <label for="usuario">Usuário ou E-mail</label>
+          <input
+            id="usuario"
+            name="usuario"
+            type="text"
+            required
+            autocomplete="username"
+            placeholder="seu.usuario ou email@exemplo.com"
+          />
         </div>
+
         <div class="campo">
-          <label for="senha">Senha:</label>
-          <input id="senha" name="senha" type="password" required autocomplete="current-password" />
+          <label for="senha">Senha</label>
+          <input
+            id="senha"
+            name="senha"
+            type="password"
+            required
+            autocomplete="current-password"
+            placeholder="••••••••"
+          />
         </div>
-        <button type="submit">Entrar</button>
+
+        <button type="submit" class="btn-entrar">
+          <span>Entrar</span>
+          <span aria-hidden="true">&#8599;</span>
+        </button>
       </form>
     </div>
-  </div>
+
+    <div class="rodape-dir">CARTAZES SIMPLES. TEMPO BEM USADO.</div>
+  </main>
 </body>
 </html>
