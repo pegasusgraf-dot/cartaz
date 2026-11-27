@@ -33,82 +33,88 @@
 
     .welcome-header {
       text-align: center;
-      margin-bottom: 25px;
+      margin-bottom: 24px;
     }
 
     .welcome-header h1 {
       font-size: 2rem;
-      margin: 0 0 10px 0;
+      margin: 0 0 8px 0;
       color: #ffffff;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .brand-title {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #f39c12;
-      margin: 0 0 8px 0;
-      letter-spacing: 0.5px;
+      font-size: 2.1rem;
+      font-weight: 800;
+      color: #f59e0b;
+      margin: 0 0 6px 0;
+      letter-spacing: 0.4px;
     }
 
     .brand-subtitle {
       font-size: 0.75rem;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
-      color: #8c8c9e;
+      letter-spacing: 1.6px;
+      color: #94a3b8;
       margin: 0;
+      font-weight: 500;
     }
 
     .form-container {
       background: #ffffff;
-      color: #333333;
-      padding: 25px;
-      border-radius: 8px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      color: #1e293b;
+      padding: 26px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
       width: 100%;
     }
 
     .form-container h2 {
       margin-top: 0;
-      margin-bottom: 12px;
-      color: #333333;
+      margin-bottom: 14px;
+      color: #1e293b;
       text-align: center;
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       font-weight: 700;
     }
 
+    .campo {
+      margin-bottom: 14px;
+    }
+
     .form-container label {
-      font-size: 14px;
-      color: #555555;
+      font-size: 0.88rem;
+      color: #475569;
       display: block;
-      margin-top: 10px;
-      font-weight: 500;
+      margin-bottom: 6px;
+      font-weight: 600;
     }
 
     .form-container input {
       width: 100%;
-      padding: 8px 10px;
-      margin-top: 5px;
-      border: 1px solid #cccccc;
-      border-radius: 4px;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
       font-size: 0.95rem;
-      color: #1e293b;
-      background: #ffffff;
+      color: #0f172a;
+      background: #f8fafc;
       outline: none;
+      transition: border-color 0.2s ease, background-color 0.2s ease;
     }
 
     .form-container input:focus {
-      border-color: #007bff;
+      border-color: #2563eb;
+      background: #ffffff;
     }
 
     .form-container button {
-      margin-top: 16px;
+      margin-top: 6px;
       cursor: pointer;
-      padding: 10px;
-      background-color: #007bff;
+      padding: 11px 14px;
+      background-color: #2563eb;
       color: #ffffff;
       border: none;
-      border-radius: 4px;
+      border-radius: 6px;
       width: 100%;
       font-weight: 700;
       font-size: 0.95rem;
@@ -116,7 +122,7 @@
     }
 
     .form-container button:hover {
-      background-color: #0056b3;
+      background-color: #1d4ed8;
     }
 
     .erro {
@@ -125,11 +131,10 @@
       color: #b91c1c;
       padding: 10px 12px;
       border-radius: 6px;
-      margin-top: 10px;
-      margin-bottom: 6px;
+      margin-bottom: 14px;
       font-size: 0.85rem;
       text-align: center;
-      font-weight: 500;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -138,7 +143,7 @@
     <div class="welcome-header">
       <h1>Seja bem-vindo!</h1>
       <div class="brand-title">Gerador de Cartazes</div>
-      <p class="brand-subtitle">OFERTAS E CARTAZES EM SEGUNDOS!</p>
+      <p class="brand-subtitle">GESTÃO RÁPIDA DE OFERTAS E CARTAZES</p>
     </div>
 
     <div class="form-container">
@@ -149,11 +154,11 @@
       {% endif %}
 
       <form method="POST" action="/login">
-        <div>
+        <div class="campo">
           <label for="usuario">Usuário:</label>
           <input id="usuario" name="usuario" type="text" required autocomplete="username" />
         </div>
-        <div>
+        <div class="campo">
           <label for="senha">Senha:</label>
           <input id="senha" name="senha" type="password" required autocomplete="current-password" />
         </div>
