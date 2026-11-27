@@ -115,6 +115,10 @@
           <input id="preco_oferta" type="text" placeholder="Ex: 24,90" />
         </div>
         <div class="campo">
+          <label for="unidade_medida">Unidade de Medida (<code>unidade_medida</code>, opcional)</label>
+          <input id="unidade_medida" name="unidade_medida" type="text" placeholder="Ex: KG, UN, PCT" />
+        </div>
+        <div class="campo">
           <label for="campo_extra">Leve X Por: (opcional)</label>
           <input id="campo_extra" type="text" placeholder="Ex: 3 UNIDADES" />
         </div>
@@ -233,6 +237,7 @@
       fd.append("descricao_produtos", document.getElementById("descricao_produtos").value);
       fd.append("preco_normal", document.getElementById("preco_normal").value);
       fd.append("preco_oferta", document.getElementById("preco_oferta").value || "0");
+      fd.append("unidade_medida", document.getElementById("unidade_medida").value);
       fd.append("campo_extra", document.getElementById("campo_extra").value);
       fd.append("observacao_extra", document.getElementById("observacao_extra").value);
       fd.append("limite_por_cliente", document.getElementById("limite_por_cliente").value);
@@ -344,6 +349,7 @@
       "descricao_produtos",
       "preco_normal",
       "preco_oferta",
+      "unidade_medida",
       "campo_extra",
       "observacao_extra",
       "limite_por_cliente",
