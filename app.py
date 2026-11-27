@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from functools import wraps
 import io
+import math
 import os
 import re
 import zipfile
@@ -203,7 +204,10 @@ def normalizar_forma_valor(valor, legado_paralelogramo=False):
         "pílula": "pilula",
         "trapezio": "trapezio",
         "trapézio": "trapezio",
-        "losango": "losango",
+        "estrela_20_pontas": "estrela_20_pontas",
+        "estrela_20": "estrela_20_pontas",
+        "estrela20": "estrela_20_pontas",
+        "estrela": "estrela_20_pontas",
         "elipse": "elipse",
     }
     texto = str(valor or "").strip().lower()
@@ -657,6 +661,34 @@ def _tracar_poligono_arredondado(c, vertices, raio):
     c.drawPath(path, stroke=0, fill=1)
 
 
+def desenhar_estrela_20_pontas(c, x0, yb, w, h):
+    cx = x0 + (w * 0.5)
+    ym = yb + (h * 0.5)
+    rx_ext = w * 0.52
+    ry_ext = h * 0.56
+    rx_int = w * 0.44
+    ry_int = h * 0.44
+
+    pontas = 20
+    total_vertices = pontas * 2
+    path = c.beginPath()
+
+    for idx in range(total_vertices):
+        angulo = (2.0 * math.pi * idx) / total_vertices
+        eh_ponta = (idx % 2) == 0
+        rx = rx_ext if eh_ponta else rx_int
+        ry = ry_ext if eh_ponta else ry_int
+        px = cx + (rx * math.cos(angulo))
+        py = ym + (ry * math.sin(angulo))
+        if idx == 0:
+            path.moveTo(px, py)
+        else:
+            path.lineTo(px, py)
+
+    path.close()
+    c.drawPath(path, stroke=0, fill=1)
+
+
 def desenhar_forma_atras_valor(
     c,
     x_esq_forma,
@@ -674,10 +706,8 @@ def desenhar_forma_atras_valor(
     h = max(16.0, float(altura_forma))
     x0 = float(x_esq_forma)
     x1 = x0 + w
-    cx = x0 + (w * 0.5)
     yb = float(y_baixo_forma)
     yt = yb + h
-    ym = yb + (h * 0.5)
 
     c.saveState()
     c.setFillColorRGB(
@@ -719,15 +749,8 @@ def desenhar_forma_atras_valor(
         raio = max(6.0, min(h * 0.14, w * 0.06))
         _tracar_poligono_arredondado(c, vertices, raio)
 
-    elif tipo == "losango":
-        vertices = [
-            (cx, yb),
-            (x1, ym),
-            (cx, yt),
-            (x0, ym),
-        ]
-        raio = max(6.0, min(h * 0.12, w * 0.06))
-        _tracar_poligono_arredondado(c, vertices, raio)
+    elif tipo == "estrela_20_pontas":
+        desenhar_estrela_20_pontas(c, x0, yb, w, h)
 
     elif tipo == "elipse":
         c.ellipse(x0, yb, x1, yt, stroke=0, fill=1)
