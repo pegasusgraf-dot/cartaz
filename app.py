@@ -953,11 +953,35 @@ def criar_cartaz_pdf(
     tem_preco_por = tem_valor_preco_valido(p_oferta_bruto)
     mostrar_por_apenas = tem_preco_de and tem_preco_por
 
-    tamanho_fonte_preco = int(altura * (0.255 if eh_horizontal else 0.180))
+    # Escala proporcional para preencher a largura util da pagina com centralizacao
+    tam_base_amostra = 100.0
+    geom_amostra = calcular_geometria_preco_oferta(
+        c,
+        x_esq_preco,
+        largura_bloco_preco,
+        0.0,
+        p_oferta,
+        f_preco_oferta,
+        tam_base_amostra,
+        fundo_paralelogramo=fundo_paralelogramo,
+        unidade_medida=unidade_medida,
+        fonte_unidade=f_detalhes,
+    )
+    largura_referencia_amostra = max(
+        1.0,
+        geom_amostra["largura_fundo"] if fundo_paralelogramo else geom_amostra["largura_total_preco"],
+    )
+    largura_desejada_preco = largura_bloco_preco * (0.78 if eh_horizontal else 0.84)
+    tam_por_largura = int(tam_base_amostra * (largura_desejada_preco / largura_referencia_amostra))
+
+    piso_preco = int(altura * (0.14 if eh_horizontal else 0.11))
+    teto_preco = int(altura * (0.34 if eh_horizontal else 0.28))
+    tamanho_fonte_preco = max(piso_preco, min(teto_preco, tam_por_largura))
+
     if eh_horizontal:
-        y_pos_preco = int(altura * 0.145) if tem_limite else int(altura * 0.105)
+        y_pos_preco = int(altura * 0.155) if tem_limite else int(altura * 0.115)
     else:
-        y_pos_preco = (y_limite + int(altura * 0.098)) if tem_limite else int(altura * 0.192)
+        y_pos_preco = (y_limite + int(altura * 0.105)) if tem_limite else int(altura * 0.200)
 
     tamanho_fonte_por_apenas = int(altura * (0.026 if eh_horizontal else 0.023))
     tamanho_fonte_normal = int(altura * (0.044 if eh_horizontal else 0.042))
@@ -997,8 +1021,8 @@ def criar_cartaz_pdf(
         disponivel = max(1, y_cursor - limite_superior_preco)
         necessario = max(1, topo_bloco_preco - limite_superior_preco)
         fator_ajuste = max(0.55, min(1.0, disponivel / float(necessario)))
-        piso_preco = int(altura * (0.12 if eh_horizontal else 0.088))
-        tamanho_fonte_preco = max(piso_preco, int(tamanho_fonte_preco * fator_ajuste))
+        piso_ajuste = int(altura * (0.12 if eh_horizontal else 0.088))
+        tamanho_fonte_preco = max(piso_ajuste, int(tamanho_fonte_preco * fator_ajuste))
         geom_preco, y_por_apenas, y_de, topo_bloco_preco = calcular_cotas_preco(tamanho_fonte_preco)
 
     if mostrar_por_apenas:
