@@ -188,7 +188,7 @@ def parse_bool_form(valor, padrao=False):
     return padrao
 
 
-def normalizar_forma_abaixo(valor, legado_paralelogramo=False):
+def normalizar_forma_valor(valor, legado_paralelogramo=False):
     mapa_aliases = {
         "nenhuma": "nenhuma",
         "nenhum": "nenhuma",
@@ -657,25 +657,27 @@ def _tracar_poligono_arredondado(c, vertices, raio):
     c.drawPath(path, stroke=0, fill=1)
 
 
-def desenhar_forma_abaixo_valor(
+def desenhar_forma_atras_valor(
     c,
-    centro_x,
-    y_baixo,
-    largura,
-    altura,
+    x_esq_forma,
+    y_baixo_forma,
+    largura_forma,
+    altura_forma,
     forma="paralelogramo",
     cor_preenchimento=(255, 215, 0),
 ):
-    tipo = normalizar_forma_abaixo(forma)
+    tipo = normalizar_forma_valor(forma)
     if tipo == "nenhuma":
         return
 
-    w = max(24.0, float(largura))
-    h = max(10.0, float(altura))
-    cx = float(centro_x)
-    yb = float(y_baixo)
+    w = max(24.0, float(largura_forma))
+    h = max(16.0, float(altura_forma))
+    x0 = float(x_esq_forma)
+    x1 = x0 + w
+    cx = x0 + (w * 0.5)
+    yb = float(y_baixo_forma)
     yt = yb + h
-    xm = yb + (h * 0.5)
+    ym = yb + (h * 0.5)
 
     c.saveState()
     c.setFillColorRGB(
@@ -685,52 +687,50 @@ def desenhar_forma_abaixo_valor(
     )
 
     if tipo == "retangulo":
-        c.rect(cx - (w / 2.0), yb, w, h, stroke=0, fill=1)
+        c.rect(x0, yb, w, h, stroke=0, fill=1)
 
     elif tipo == "retangulo_arredondado":
-        raio = max(4.0, min(h * 0.28, w * 0.14))
-        c.roundRect(cx - (w / 2.0), yb, w, h, raio, stroke=0, fill=1)
+        raio = max(6.0, min(h * 0.16, w * 0.08))
+        c.roundRect(x0, yb, w, h, raio, stroke=0, fill=1)
 
     elif tipo == "pilula":
-        raio = h * 0.49
-        c.roundRect(cx - (w / 2.0), yb, w, h, raio, stroke=0, fill=1)
+        raio = h * 0.45
+        c.roundRect(x0, yb, w, h, raio, stroke=0, fill=1)
 
     elif tipo == "paralelogramo":
-        skew = min(w * 0.14, h * 1.10)
-        x0 = cx - ((w + skew) / 2.0)
-        x1 = x0 + w
+        skew = min(w * 0.08, h * 0.35)
         vertices = [
-            (x0, yb),
-            (x1, yb),
-            (x1 + skew, yt),
-            (x0 + skew, yt),
+            (x0 - (skew * 0.5), yb),
+            (x1 - (skew * 0.5), yb),
+            (x1 + (skew * 0.5), yt),
+            (x0 + (skew * 0.5), yt),
         ]
-        raio = max(4.0, min(h * 0.22, w * 0.10))
+        raio = max(6.0, min(h * 0.14, w * 0.06))
         _tracar_poligono_arredondado(c, vertices, raio)
 
     elif tipo == "trapezio":
-        recuo = min(w * 0.15, h * 0.90)
+        recuo = min(w * 0.08, h * 0.25)
         vertices = [
-            (cx - (w / 2.0), yb),
-            (cx + (w / 2.0), yb),
-            (cx + (w / 2.0) - recuo, yt),
-            (cx - (w / 2.0) + recuo, yt),
+            (x0, yb),
+            (x1, yb),
+            (x1 - recuo, yt),
+            (x0 + recuo, yt),
         ]
-        raio = max(4.0, min(h * 0.20, w * 0.10))
+        raio = max(6.0, min(h * 0.14, w * 0.06))
         _tracar_poligono_arredondado(c, vertices, raio)
 
     elif tipo == "losango":
         vertices = [
             (cx, yb),
-            (cx + (w / 2.0), xm),
+            (x1, ym),
             (cx, yt),
-            (cx - (w / 2.0), xm),
+            (x0, ym),
         ]
-        raio = max(4.0, min(h * 0.18, w * 0.08))
+        raio = max(6.0, min(h * 0.12, w * 0.06))
         _tracar_poligono_arredondado(c, vertices, raio)
 
     elif tipo == "elipse":
-        c.ellipse(cx - (w / 2.0), yb, cx + (w / 2.0), yt, stroke=0, fill=1)
+        c.ellipse(x0, yb, x1, yt, stroke=0, fill=1)
 
     c.restoreState()
 
@@ -743,8 +743,8 @@ def calcular_geometria_preco_oferta(
     preco_str,
     fonte,
     tamanho_inteiro,
-    forma_abaixo="nenhuma",
-    cor_forma_abaixo=(255, 215, 0),
+    forma_valor="nenhuma",
+    cor_forma_valor=(255, 215, 0),
     unidade_medida="",
     fonte_unidade="Helvetica",
 ):
@@ -770,7 +770,6 @@ def calcular_geometria_preco_oferta(
     espaco = int(tamanho_inteiro * 0.05)
     largura_total_preco = largura_simbolo + espaco + largura_inteiro + largura_centavos
     x_inicial = float(x_esq) + ((largura_caixa - largura_total_preco) / 2.0)
-    centro_preco_x = float(x_esq) + (largura_caixa / 2.0)
 
     y_simbolo = y + (tamanho_inteiro * 0.50)
     y_centavos = y + (tamanho_inteiro * 0.35)
@@ -797,18 +796,14 @@ def calcular_geometria_preco_oferta(
     x_unidade = x_centro_centavos if largura_centavos >= tamanho_unidade else x_centro_preco
     y_unidade = y_centavos - espaco_unidade - (tamanho_unidade * 0.85) if tem_unidade else y_base_total
 
-    tipo_forma = normalizar_forma_abaixo(forma_abaixo)
-    tem_forma_abaixo = tipo_forma != "nenhuma"
-    espaco_forma_abaixo = max(8.0, tamanho_inteiro * 0.05)
-    altura_forma_abaixo = max(16.0, tamanho_inteiro * 0.12)
-    largura_forma_abaixo = min(largura_caixa * 0.94, max(largura_total_preco * 0.85, largura_caixa * 0.65))
-
-    if tem_unidade:
-        y_base_referencia_forma = y_unidade - (tamanho_unidade * 0.25) - espaco_forma_abaixo
-    else:
-        y_base_referencia_forma = y_base_total - espaco_forma_abaixo
-
-    y_baixo_forma = y_base_referencia_forma - altura_forma_abaixo
+    tipo_forma = normalizar_forma_valor(forma_valor)
+    tem_forma_valor = tipo_forma != "nenhuma"
+    pad_x = max(14.0, tamanho_inteiro * 0.10)
+    pad_y = max(8.0, tamanho_inteiro * 0.06)
+    x_esq_forma = x_inicial - pad_x
+    y_baixo_forma = y_base_total - pad_y
+    largura_forma = largura_total_preco + (pad_x * 2.0)
+    altura_forma = (y_topo_total - y_base_total) + (pad_y * 2.0)
 
     return {
         "simbolo": simbolo,
@@ -821,7 +816,6 @@ def calcular_geometria_preco_oferta(
         "largura_total_preco": largura_total_preco,
         "espaco": espaco,
         "x_inicial": x_inicial,
-        "centro_preco_x": centro_preco_x,
         "y_simbolo": y_simbolo,
         "y_centavos": y_centavos,
         "y_topo_total": y_topo_total,
@@ -832,13 +826,13 @@ def calcular_geometria_preco_oferta(
         "fonte_unidade": fonte_unidade,
         "x_unidade": x_unidade,
         "y_unidade": y_unidade,
-        "forma_abaixo": tipo_forma,
-        "tem_forma_abaixo": tem_forma_abaixo,
-        "cor_forma_abaixo": parse_cor_rgb(cor_forma_abaixo),
-        "x_forma_abaixo": centro_preco_x,
+        "forma_valor": tipo_forma,
+        "tem_forma_valor": tem_forma_valor,
+        "cor_forma_valor": parse_cor_rgb(cor_forma_valor),
+        "x_esq_forma": x_esq_forma,
         "y_baixo_forma": y_baixo_forma,
-        "largura_forma_abaixo": largura_forma_abaixo,
-        "altura_forma_abaixo": altura_forma_abaixo,
+        "largura_forma": largura_forma,
+        "altura_forma": altura_forma,
     }
 
 
@@ -851,8 +845,8 @@ def desenhar_preco_oferta_fracionado(
     fonte,
     tamanho_inteiro,
     cor=(255, 0, 0),
-    forma_abaixo="nenhuma",
-    cor_forma_abaixo=(255, 215, 0),
+    forma_valor="nenhuma",
+    cor_forma_valor=(255, 215, 0),
     geom=None,
     unidade_medida="",
     fonte_unidade="Helvetica",
@@ -867,10 +861,21 @@ def desenhar_preco_oferta_fracionado(
             preco_str,
             fonte,
             tamanho_inteiro,
-            forma_abaixo=forma_abaixo,
-            cor_forma_abaixo=cor_forma_abaixo,
+            forma_valor=forma_valor,
+            cor_forma_valor=cor_forma_valor,
             unidade_medida=unidade_medida,
             fonte_unidade=fonte_unidade,
+        )
+
+    if geom["tem_forma_valor"]:
+        desenhar_forma_atras_valor(
+            c,
+            x_esq_forma=geom["x_esq_forma"],
+            y_baixo_forma=geom["y_baixo_forma"],
+            largura_forma=geom["largura_forma"],
+            altura_forma=geom["altura_forma"],
+            forma=geom["forma_valor"],
+            cor_preenchimento=geom["cor_forma_valor"],
         )
 
     c.setFillColorRGB(cor[0] / 255, cor[1] / 255, cor[2] / 255)
@@ -890,17 +895,6 @@ def desenhar_preco_oferta_fracionado(
         c.setFillColorRGB(cor_unidade[0] / 255, cor_unidade[1] / 255, cor_unidade[2] / 255)
         c.drawCentredString(geom["x_unidade"], geom["y_unidade"], geom["unidade_medida"])
 
-    if geom["tem_forma_abaixo"]:
-        desenhar_forma_abaixo_valor(
-            c,
-            centro_x=geom["x_forma_abaixo"],
-            y_baixo=geom["y_baixo_forma"],
-            largura=geom["largura_forma_abaixo"],
-            altura=geom["altura_forma_abaixo"],
-            forma=geom["forma_abaixo"],
-            cor_preenchimento=geom["cor_forma_abaixo"],
-        )
-
 
 def criar_cartaz_pdf(
     c,
@@ -913,8 +907,8 @@ def criar_cartaz_pdf(
     fator_escala=1.0,
     formato="vertical",
     fundo_paralelogramo=False,
-    forma_abaixo_valor=None,
-    cor_forma_abaixo=(255, 215, 0),
+    forma_valor=None,
+    cor_forma_valor=(255, 215, 0),
 ):
     cfg = obter_config_formato(formato)
     largura = largura_orig * fator_escala
@@ -923,12 +917,12 @@ def criar_cartaz_pdf(
     margem_topo_dobra = cfg["margem_topo_dobra"] * fator_escala
     tem_dobra = margem_topo_dobra > 0
 
-    forma_escolhida = normalizar_forma_abaixo(
-        forma_abaixo_valor if forma_abaixo_valor is not None else dados.get("forma_abaixo_valor", ""),
+    forma_escolhida = normalizar_forma_valor(
+        forma_valor if forma_valor is not None else dados.get("forma_valor", ""),
         legado_paralelogramo=fundo_paralelogramo,
     )
     cor_forma_rgb = parse_cor_rgb(
-        cor_forma_abaixo if cor_forma_abaixo is not None else dados.get("cor_forma_abaixo", "#FFD700"),
+        cor_forma_valor if cor_forma_valor is not None else dados.get("cor_forma_valor", "#FFD700"),
         padrao=(255, 215, 0),
     )
 
@@ -1079,7 +1073,6 @@ def criar_cartaz_pdf(
     tem_preco_por = tem_valor_preco_valido(p_oferta_bruto)
     mostrar_por_apenas = tem_preco_de and tem_preco_por
 
-    # Escala proporcional do preco "Por" para ocupar a largura util com centralizacao
     tam_base_amostra = 100.0
     geom_amostra = calcular_geometria_preco_oferta(
         c,
@@ -1089,8 +1082,8 @@ def criar_cartaz_pdf(
         p_oferta,
         f_preco_oferta,
         tam_base_amostra,
-        forma_abaixo=forma_escolhida,
-        cor_forma_abaixo=cor_forma_rgb,
+        forma_valor=forma_escolhida,
+        cor_forma_valor=cor_forma_rgb,
         unidade_medida=unidade_medida,
         fonte_unidade=f_detalhes,
     )
@@ -1121,12 +1114,16 @@ def criar_cartaz_pdf(
             p_oferta,
             f_preco_oferta,
             tam_preco_cand,
-            forma_abaixo=forma_escolhida,
-            cor_forma_abaixo=cor_forma_rgb,
+            forma_valor=forma_escolhida,
+            cor_forma_valor=cor_forma_rgb,
             unidade_medida=unidade_medida,
             fonte_unidade=f_detalhes,
         )
-        base_referencia_topo = geom_cand["y_topo_total"]
+        base_referencia_topo = (
+            (geom_cand["y_baixo_forma"] + geom_cand["altura_forma"])
+            if geom_cand["tem_forma_valor"]
+            else geom_cand["y_topo_total"]
+        )
         y_por_cand = base_referencia_topo + folga_topo_por_apenas if mostrar_por_apenas else base_referencia_topo
         y_de_cand = (y_por_cand + distancia_de_acima) if mostrar_por_apenas else (base_referencia_topo + folga_topo_por_apenas)
 
@@ -1185,8 +1182,8 @@ def criar_cartaz_pdf(
         f_preco_oferta,
         tamanho_fonte_preco,
         (255, 0, 0),
-        forma_abaixo=forma_escolhida,
-        cor_forma_abaixo=cor_forma_rgb,
+        forma_valor=forma_escolhida,
+        cor_forma_valor=cor_forma_rgb,
         geom=geom_preco,
         unidade_medida=unidade_medida,
         fonte_unidade=f_detalhes,
@@ -1269,14 +1266,16 @@ def criar_cartaz_pdf(
 def _extrair_estilo_forma_request(req):
     legado = parse_bool_form(req.form.get("fundo_paralelogramo"), padrao=False)
     forma_raw = (
-        req.form.get("forma_abaixo_valor")
+        req.form.get("forma_valor")
+        or req.form.get("forma_abaixo_valor")
         or req.form.get("forma_geometrica")
         or req.form.get("forma")
         or ""
     ).strip()
-    forma_limpa = normalizar_forma_abaixo(forma_raw, legado_paralelogramo=legado)
+    forma_limpa = normalizar_forma_valor(forma_raw, legado_paralelogramo=legado)
     cor_raw = (
-        req.form.get("cor_forma_abaixo")
+        req.form.get("cor_forma_valor")
+        or req.form.get("cor_forma_abaixo")
         or req.form.get("cor_forma")
         or req.form.get("cor_paralelogramo")
         or "#FFD700"
@@ -1347,7 +1346,7 @@ def preview():
         codigo_buscado = request.form.get("codigo_produto", "").strip()
         cfg = obter_config_formato(request.form.get("formato"))
         largura_fmt, altura_fmt, formato_limpo = cfg["largura"], cfg["altura"], cfg["formato"]
-        forma_abaixo, cor_forma = _extrair_estilo_forma_request(request)
+        forma_val, cor_forma = _extrair_estilo_forma_request(request)
 
         if not codigo_buscado or file_planilha.filename == "" or not caminho_fundo:
             return "Dados incompletos (selecione planilha, fundo e código)", 400
@@ -1376,7 +1375,8 @@ def preview():
             return "Produto não encontrado", 404
 
         try:
-            Image.open(caminho_fundo).verify()
+            with Image.open(caminho_fundo) as im_check:
+                im_check.verify()
         except Exception:
             return "Imagem inválida", 400
 
@@ -1393,8 +1393,8 @@ def preview():
             y_offset=0,
             fator_escala=1.0,
             formato=formato_limpo,
-            forma_abaixo_valor=forma_abaixo,
-            cor_forma_abaixo=cor_forma,
+            forma_valor=forma_val,
+            cor_forma_valor=cor_forma,
         )
         c.showPage()
         c.save()
@@ -1421,7 +1421,7 @@ def preview_avulso():
         preco_oferta = (form.get("preco_oferta") or form.get("preco_por") or "0").strip()
         cfg = obter_config_formato(form.get("formato"))
         largura_fmt, altura_fmt, formato_limpo = cfg["largura"], cfg["altura"], cfg["formato"]
-        forma_abaixo, cor_forma = _extrair_estilo_forma_request(request)
+        forma_val, cor_forma = _extrair_estilo_forma_request(request)
 
         validade_val = (form.get("validade") or "").strip()
         data_inicio_val = (form.get("data_inicio") or "").strip()
@@ -1478,8 +1478,8 @@ def preview_avulso():
             y_offset=0,
             fator_escala=1.0,
             formato=formato_limpo,
-            forma_abaixo_valor=forma_abaixo,
-            cor_forma_abaixo=cor_forma,
+            forma_valor=forma_val,
+            cor_forma_valor=cor_forma,
         )
         c.showPage()
         c.save()
@@ -1508,7 +1508,7 @@ def gerar():
         caminho_fundo = resolver_imagem_fundo(request, fallback_ultimo_upload=False)
         cfg = obter_config_formato(request.form.get("formato"))
         largura_fmt, altura_fmt, formato_limpo = cfg["largura"], cfg["altura"], cfg["formato"]
-        forma_abaixo, cor_forma = _extrair_estilo_forma_request(request)
+        forma_val, cor_forma = _extrair_estilo_forma_request(request)
 
         if file_planilha.filename == "" or not caminho_fundo:
             return "Selecione a planilha (.xlsx) e uma imagem de fundo (da pasta ou por upload).", 400
@@ -1556,8 +1556,8 @@ def gerar():
                 y_offset=0,
                 fator_escala=1.0,
                 formato=formato_limpo,
-                forma_abaixo_valor=forma_abaixo,
-                cor_forma_abaixo=cor_forma,
+                forma_valor=forma_val,
+                cor_forma_valor=cor_forma,
             )
             c.showPage()
             c.save()
@@ -1602,7 +1602,7 @@ def gerar_unico():
         codigo_buscado = request.form.get("codigo_produto", "").strip()
         cfg = obter_config_formato(request.form.get("formato"))
         largura_fmt, altura_fmt, formato_limpo = cfg["largura"], cfg["altura"], cfg["formato"]
-        forma_abaixo, cor_forma = _extrair_estilo_forma_request(request)
+        forma_val, cor_forma = _extrair_estilo_forma_request(request)
 
         if not codigo_buscado:
             return "Digite o código do produto que deseja buscar.", 400
@@ -1653,8 +1653,8 @@ def gerar_unico():
             y_offset=0,
             fator_escala=1.0,
             formato=formato_limpo,
-            forma_abaixo_valor=forma_abaixo,
-            cor_forma_abaixo=cor_forma,
+            forma_valor=forma_val,
+            cor_forma_valor=cor_forma,
         )
         c.showPage()
         c.save()
@@ -1674,7 +1674,7 @@ def gerar_avulso():
         preco_oferta = (form.get("preco_oferta") or form.get("preco_por") or "").strip()
         cfg = obter_config_formato(form.get("formato"))
         largura_fmt, altura_fmt, formato_limpo = cfg["largura"], cfg["altura"], cfg["formato"]
-        forma_abaixo, cor_forma = _extrair_estilo_forma_request(request)
+        forma_val, cor_forma = _extrair_estilo_forma_request(request)
 
         if not nome_prod or not preco_oferta:
             return "Preencha o Nome do Produto e o Preço 'Por'.", 400
@@ -1736,8 +1736,8 @@ def gerar_avulso():
             y_offset=0,
             fator_escala=1.0,
             formato=formato_limpo,
-            forma_abaixo_valor=forma_abaixo,
-            cor_forma_abaixo=cor_forma,
+            forma_valor=forma_val,
+            cor_forma_valor=cor_forma,
         )
         c.showPage()
         c.save()
