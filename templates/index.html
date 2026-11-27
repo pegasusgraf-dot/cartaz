@@ -217,6 +217,8 @@
     let timerPreviewAvulso = null;
     let controllerPreviewAvulso = null;
     let ultimaUrlPreview = null;
+    let emExecucaoPreview = false;
+    let pendenciaPreview = false;
 
     const CORES_PLANILHA = [
       { nome: "Amarelo Ouro", hex: "#FFD700" },
@@ -269,7 +271,7 @@
 
     function notificarMudancaEstilo() {
       if (abaAtual === "avulso") {
-        agendarPreviewAvulso(120);
+        agendarPreviewAvulso(220);
       } else if (document.getElementById("planilha_file").files[0] && document.getElementById("codigo_produto").value.trim()) {
         atualizarPreviewPlanilha();
       }
@@ -283,7 +285,7 @@
         abaAtual = btn.dataset.aba;
         document.getElementById("sec-" + abaAtual).classList.add("ativa");
         if (abaAtual === "avulso") {
-          agendarPreviewAvulso(100);
+          agendarPreviewAvulso(180);
         }
       });
     });
@@ -358,7 +360,7 @@
       definirStatusPreview("Erro na prévia");
     }
 
-    function agendarPreviewAvulso(delayMs = 350) {
+    function agendarPreviewAvulso(delayMs = 450) {
       if (abaAtual !== "avulso") return;
       clearTimeout(timerPreviewAvulso);
       definirStatusPreview("Digitando...");
@@ -368,8 +370,15 @@
     }
 
     async function atualizarPreviewAvulso() {
+      if (emExecucaoPreview) {
+        pendenciaPreview = true;
+        return;
+      }
+      emExecucaoPreview = true;
+      pendenciaPreview = false;
+
       if (controllerPreviewAvulso) {
-        controllerPreviewAvulso.abort();
+        try { controllerPreviewAvulso.abort(); } catch (e) {}
       }
       controllerPreviewAvulso = new AbortController();
       definirStatusPreview("Atualizando prévia...");
@@ -384,11 +393,20 @@
           signal: controllerPreviewAvulso.signal,
         });
         if (!res) return;
-        if (!res.ok) return mostrarErroPreview(await res.text());
+        if (!res.ok) {
+          mostrarErroPreview(await res.text());
+          return;
+        }
         mostrarImagemPreview(await res.blob());
       } catch (err) {
-        if (err.name === "AbortError") return;
+        if (err && err.name === "AbortError") return;
         mostrarErroPreview("Erro ao atualizar prévia em tempo real.");
+      } finally {
+        emExecucaoPreview = false;
+        if (pendenciaPreview) {
+          pendenciaPreview = false;
+          agendarPreviewAvulso(150);
+        }
       }
     }
 
@@ -447,7 +465,7 @@
     const pickerCor = document.getElementById("cor_forma_picker");
     const inputHexCor = document.getElementById("cor_forma_hex");
 
-    pickerCor.addEventListener("input", () => {
+    pickerCor.addEventListener("change", () => {
       const val = pickerCor.value.toUpperCase();
       inputHexCor.value = val;
       marcarSwatchAtiva(val);
@@ -460,8 +478,8 @@
       if (/^#[0-9a-fA-F]{6}$/.test(comHash)) {
         pickerCor.value = comHash;
         marcarSwatchAtiva(comHash);
+        notificarMudancaEstilo();
       }
-      notificarMudancaEstilo();
     });
 
     [
@@ -477,8 +495,8 @@
     ].forEach((id) => {
       const el = document.getElementById(id);
       if (el) {
-        el.addEventListener("input", () => agendarPreviewAvulso(350));
-        el.addEventListener("change", () => agendarPreviewAvulso(150));
+        el.addEventListener("input", () => agendarPreviewAvulso(450));
+        el.addEventListener("change", () => agendarPreviewAvulso(200));
       }
     });
 
@@ -490,7 +508,7 @@
     });
 
     montarPlanilhaCores();
-    carregarFundos().then(() => {
+    carregarFundos().finally(() => {
       atualizarPreviewAvulso();
     });
   </script>
